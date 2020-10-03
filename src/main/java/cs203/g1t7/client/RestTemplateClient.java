@@ -19,7 +19,7 @@ public class RestTemplateClient {
      */
     public RestTemplateClient(RestTemplateBuilder restTemplateBuilder) {
         this.template = restTemplateBuilder
-                .basicAuthentication("admin", "goodpassword")
+                .basicAuthentication("marktan123", "goodpassword")
                 .build();
     }
     /**
@@ -38,14 +38,14 @@ public class RestTemplateClient {
      * Add a new book
      * 
      * @param URI
-     * @param newBook
+     * @param newContent
      * @return
      */
-    // public Book addBook(final String URI, final Book newBook) {
-    //     final Book returned = template.postForObject(URI, newBook, Book.class);
+    public Content addContent(final String URI, final Content newContent) {
+        final Content returned = template.postForObject(URI, newContent, Content.class);
         
-    //     return returned;
-    // }
+        return returned;
+    }
 
     /**
      * Get a book, but return a HTTP response entity.
@@ -53,8 +53,8 @@ public class RestTemplateClient {
      * @param id
      * @return
      */
-    // public ResponseEntity<Book> getBookEntity(final String URI, final Long id){
-    //     return template.getForEntity(URI + "/{id}", Book.class, Long.toString(id));
-    // }
+    public ResponseEntity<Content> getContentEntity(final String URI, final Long id){
+        return template.getForEntity(URI + "/{id}", Content.class, Long.toString(id));
+    }
     
 }

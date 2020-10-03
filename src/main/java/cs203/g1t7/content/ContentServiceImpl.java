@@ -33,6 +33,10 @@ public class ContentServiceImpl implements ContentService {
     @Override
     public Content updateContent(Long id, Content newContentInfo){
         return contents.findById(id).map(content -> {content.setTitle(newContentInfo.getTitle());
+                                                    content.setSummary(newContentInfo.getSummary()); 
+                                                    content.setLink(newContentInfo.getLink());
+                                                    content.setContent(newContentInfo.getContent());
+                                                    content.setApproved(newContentInfo.getApproved());
             return contents.save(content);
         }).orElse(null);
     }

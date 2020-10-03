@@ -1,0 +1,91 @@
+### ROLE_MANAGER views all customers
+GET http://localhost:5353/customers
+Authorization: Basic manager_1 01_manager_01
+
+### ROLE_MANAGER adding a new ROLE_USER
+POST http://localhost:5353/customers
+Content-Type: application/json
+Authorization: Basic manager_1 01_manager_01
+
+{
+    "full_name":"Bo Hua",
+    "nric":"S5002946H",
+    "phone":"91251235",
+    "address":"27 Jalan Alamak S6802342",
+    "username":"goodusers",
+    "password":"bad?password",
+    "authorities":"ROLE_USER",
+    "active": true
+}
+
+### ROLE_USER views his/her own account
+GET http://localhost:5353/customers/4
+Authorization: Basic goodusers bad?password
+
+### ROLE_USER updates his/her own account
+PUT http://localhost:5353/customers/4
+Content-Type: application/json
+Authorization: Basic goodusers bad?password
+
+{
+    "full_name":"Bo Hua Hei",
+    "nric":"S5002946H",
+    "phone":"92345678",
+    "address":"128 Jalan Durian S6802342",
+    "username":"goodusers4lyfe",
+    "password":"Ilovewonton",
+    "authorities":"ROLE_USER",
+    "active": false
+}
+
+### ROLE_MANAGER adds a new user with incorrect field (NRIC)
+POST http://localhost:5353/customers
+Content-Type: application/json
+Authorization: Basic manager_1 01_manager_01
+
+{
+    "full_name":"Xiao Po",
+    "nric":"S1234567A",
+    "phone":"91251225",
+    "address":"27 Jalan Alamak S6802342",
+    "username":"kungfuwarrior",
+    "password":"badpassword",
+    "authorities":"ROLE_USER",
+    "active": true
+}
+
+### ROLE_MANAGER deactivates existing ROLE_USER
+PUT http://localhost:5353/customers/4
+Content-Type: application/json
+Authorization: Basic manager_1 01_manager_01
+
+{
+    "full_name":"Bo Hua",
+    "nric":"S5002946H",
+    "phone":"92345678",
+    "address":"128 Jalan Alamak S6802342",
+    "username":"goodusers",
+    "password":"Ilovewonton",
+    "authorities":"ROLE_USER",
+    "active": false
+}
+
+### ROLE_ANALYST unable to activate existing ROLE_USER
+PUT http://localhost:5353/customers/4
+Content-Type: application/json
+Authorization: Basic analyst_1 01_analyst_01
+
+{
+    "full_name":"Bo Hua",
+    "nric":"S5002946H",
+    "phone":"91251235",
+    "address":"27 Jalan Alamak S6802342",
+    "username":"goodusers",
+    "password":"bad?password",
+    "authorities":"ROLE_USER",
+    "active": true
+}
+
+### ROLE_USER unable to view his/her own account since it's deactivated
+GET http://localhost:5353/customers/4
+Authorization: Basic goodusers Ilovewonton
