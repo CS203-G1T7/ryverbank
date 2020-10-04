@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import cs203.g1t7.users.NricValidation;
 
-
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -46,7 +45,7 @@ public class User implements UserDetails{
     private String authorities;
 
     @NotNull(message = "Full name should not be null")
-    @Pattern(regexp = "^[a-zA-Z]*$", message="Full name should only contain alphabetical letters")
+    @Pattern(regexp = "^[a-zA-Z ]*$", message="Full name should only contain alphabetical letters")
     private String full_name;
 
     @NotNull(message = "NRIC should not be null")
@@ -69,12 +68,7 @@ public class User implements UserDetails{
         this.password = password;
         this.authorities = authorities;
         this.full_name = full_name;
-        NricValidation validate = new NricValidation();
-        if (!validate.validateNric(nric)) {
-            throw new NotValidNricException(nric);
-        } else {
-            this.nric = nric;
-        }
+        this.nric = nric;
         this.phone = phone;
         this.address = address;
         this.active = active;
@@ -86,6 +80,15 @@ public class User implements UserDetails{
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Arrays.asList(new SimpleGrantedAuthority(authorities));
+    }
+
+    public String getAuthority() {
+        return this.authorities;
+    }
+
+    //@Override
+    public boolean getActive() {
+        return this.active;
     }
 
     /*
@@ -108,4 +111,10 @@ public class User implements UserDetails{
     public boolean isEnabled() {
         return true;
     }
+
+    // @Override
+    // public String getUsername() {
+    //     return this.username;
+    // }
+
 }

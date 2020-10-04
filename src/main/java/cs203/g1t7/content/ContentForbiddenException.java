@@ -11,5 +11,7 @@ public class ContentForbiddenException extends RuntimeException {
     public ContentForbiddenException(Long id) {
         super("Forbidden to view content " + id);
     }
-    
+    public ContentForbiddenException() {
+        super("Content forbidden ");
+    }
 }

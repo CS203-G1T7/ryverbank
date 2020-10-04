@@ -40,21 +40,22 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         .httpBasic()
             .and() 
         .authorizeRequests()
-            .antMatchers(HttpMethod.GET, "/contents/**").authenticated() 
-            .antMatchers(HttpMethod.POST, "/contents/**").authenticated() 
-            .antMatchers(HttpMethod.PUT, "/contents/**").authenticated()
-            .antMatchers(HttpMethod.DELETE, "/contents/**").authenticated()
-            
-            .antMatchers(HttpMethod.GET, "/contents/approved").hasRole("USER")
-            .antMatchers(HttpMethod.GET, "/contents").hasAnyRole("MANAGER", "ANALYST")
+            //.antMatchers(HttpMethod.GET, "/contents").hasRole("USER")
+            .antMatchers(HttpMethod.GET, "/contents/**").hasAnyRole("MANAGER", "ANALYST", "USER")
+
             .antMatchers(HttpMethod.POST, "/contents").hasAnyRole("MANAGER", "ANALYST")
+            .antMatchers(HttpMethod.PUT, "/contents/**").hasRole("MANAGER")
+
             .antMatchers(HttpMethod.PUT, "/contents/approved").hasRole("MANAGER")
             .antMatchers(HttpMethod.PUT, "/contents/title", "/contents/summary", "contents/content", "contents/link").hasAnyRole("MANAGER", "ANALYST")
             .antMatchers(HttpMethod.DELETE, "/contents/*").hasAnyRole("MANAGER", "ANALYST")
             .antMatchers(HttpMethod.PUT, "/contents/*").hasAnyRole("USER", "MANAGER", "ANALYST")
-            .antMatchers(HttpMethod.GET, "/users").hasAnyRole("USER", "MANAGER", "ANALYST")
-            .antMatchers(HttpMethod.POST, "/users").hasRole("MANAGER")
-            .antMatchers(HttpMethod.PUT, "/users").hasRole("MANAGER")
+            
+            .antMatchers(HttpMethod.GET, "/customers/**").hasAnyRole("MANAGER", "ANALYST", "USER")            
+            .antMatchers(HttpMethod.POST, "/customers").hasAnyRole("MANAGER")
+            //.antMatchers(HttpMethod.PUT, "/customers/phone", "/customers/address", "/customers/password").hasRole("USER")
+            .antMatchers(HttpMethod.PUT, "/customers/**").hasAnyRole("MANAGER", "USER")
+
 
             .and()
         .csrf().disable() // CSRF protection is needed only for browser based attacks

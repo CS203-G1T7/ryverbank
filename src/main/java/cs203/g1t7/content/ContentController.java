@@ -1,6 +1,7 @@
 package cs203.g1t7.content;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import javax.validation.Valid;
 
@@ -16,10 +17,18 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+
+import cs203.g1t7.users.User;
+import cs203.g1t7.users.UserRepository;
+import cs203.g1t7.users.CustomUserDetailsService;
 
 @RestController
 public class ContentController {
     private ContentService contentService;
+    private ContentRepository cp;
+    private UserRepository up;
 
     public ContentController(ContentService cs){
         this.contentService = cs;
@@ -31,35 +40,58 @@ public class ContentController {
      */
     @GetMapping("/contents")
     public List<Content> getContents(){
-        return contentService.listContents();
+        User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Content> all = contentService.listContents();
+        List<Content> approved = new ArrayList<Content>();
+        if(user.getAuthority().equals("ROLE_USER")) {
+            for(int i = 0; i < all.size(); i++) {
+                if(all.get(i).getApproved()) {
+                    approved.add(all.get(i));
+                }
+            }
+            return approved;
+        }
+        return all;
     }
 
     /**
-     * Search for content with the given id
+     * Search for content with the given id and given authorisation
      * If there is no content with the given "id", throw a ContentNotFoundException
      * @param id
      * @return content with the given id
      */
     @GetMapping("/contents/{id}")
-    public Content getContent(@PathVariable Long id){
+    public Content getContent(@PathVariable Long id) {
         Content content = contentService.getContent(id);
+        User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         // Need to handle "content not found" error using proper HTTP status code
         // In this case it should be HTTP 404
         if(content == null) throw new ContentNotFoundException(id);
-        return contentService.getContent(id);
+
+        // HTTP 403 "forbidden" when user tries to get unapproved content
+        if(!content.getApproved() && user.getAuthority().equals("ROLE_USER")) throw new ContentForbiddenException(id);
+
+        return content;
     }
 
-    @GetMapping("/contents/{id}/{approved}")
-    public Content getApprovedContent(@PathVariable Long id){
-        Content content = contentService.getContent(id);
+    // // to get a list of content
+    // @GetMapping("/contents")
+    // public Content[] getApprovedContent(){
+    //     List<Content> content = contentService.listContents();
+    //     User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        // Need to handle "content not found" error using proper HTTP status code
-        // In this case it should be HTTP 404
-        if(content == null) throw new ContentNotFoundException(id);
-        if(!content.getApproved()) throw new ContentForbiddenException(id);
-        return contentService.getContent(id);
-    }
+    //     // Need to handle "content not found" error using proper HTTP status code
+    //     // In this case it should be HTTP 404
+    //     for(int i = 0; i < content.size(); i++) {
+    //         if(content.get(i) == null) throw new ContentNotFoundException(content.get(i).getId());
+    //         if(!content.get(i).getApproved() && user.getAuthority().equals("ROLE_USER")) throw new ContentForbiddenException(content.get(i).getId());
+    //     }
+
+    //     Content[] con_arr = new Content[content.size()];
+
+    //     return content.toArray(con_arr);
+    // }
 
     /**
      * Add a new content with POST request to "/contents"
@@ -69,8 +101,14 @@ public class ContentController {
      */
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/contents")
-    public Content addContent(@Valid @RequestBody Content content) {
-        return contentService.addContent(content);
+    public Content addContent(@Valid @RequestBody Content newContentInfo) {
+        User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        //if(user.getAuthority().equals("ROLE_USER")) throw new ContentForbiddenException();
+        //Content content = contentService.addContent(newContentInfo);
+        if(user.getAuthority().equals("ROLE_ANALYST")) {
+            newContentInfo.setApproved(false);
+        }
+        return contentService.addContent(newContentInfo);
     }
 
     /**
@@ -80,27 +118,14 @@ public class ContentController {
      * @return the updated, or newly added content
      */
     @PutMapping("/contents/{id}")
-    public Content updateContent(@PathVariable Long id, @Valid @RequestBody Content newContentInfo){
+    public Content updateContent(@PathVariable Long id, 
+                                @Valid @RequestBody Content newContentInfo){
         Content content = contentService.updateContent(id, newContentInfo);
+        User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if(content == null) throw new ContentNotFoundException(id);
-        
+        if(user.getAuthority().equals("ROLE_USER")) throw new ContentForbiddenException(id);
         return content;
     }
-
-    /**
-     * For approval of content
-     * If there is no content with the given "id", throw a ContentNotFoundException
-     * @param id
-     * @param newContentInfo
-     * @return the updated, or newly added content
-     */
-    // @PutMapping("/contents/{id}")
-    // public Content updateContentApproved(@PathVariable Long id, @Valid @RequestBody Content newContentInfo){
-    //     Content content = contentService.updateContent(id, newContentInfo);
-    //     if(content == null) throw new ContentNotFoundException(id);
-        
-    //     return content;
-    // }
 
     /**
      * Remove a content with the DELETE request to "/contents/{id}"
@@ -109,7 +134,11 @@ public class ContentController {
      */
     @DeleteMapping("/contents/{id}")
     public void deleteContent(@PathVariable Long id){
+        User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try{
+            if(user.getAuthority().equals("ROLE_USER")) {
+                throw new ContentForbiddenException(id);
+            }
             contentService.deleteContent(id);
          }catch(EmptyResultDataAccessException e) {
             throw new ContentNotFoundException(id);

@@ -3,6 +3,12 @@ package cs203.g1t7.users;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+/*  
+    Source:
+    Terence:squeeish (2019), Validation for Singapore NRIC and FIN number 
+    https://gist.github.com/squeeish/65cc82b0acaea3f551eac6e7885dc9c5 
+*/
+
 public class NricValidation {
     public NricValidation() {}
     public boolean validateNric(String inputString) {
