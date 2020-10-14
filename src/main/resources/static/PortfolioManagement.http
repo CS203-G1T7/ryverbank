@@ -1,0 +1,3 @@
+### ROLE_MANAGER adding a new ROLE_USER
+GET http://localhost:5353/accounts/quote/AAPL
+Content-Type: application/json
