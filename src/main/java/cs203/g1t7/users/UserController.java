@@ -7,13 +7,10 @@ import javax.validation.Valid;
 import java.util.regex.Pattern;
 
 import org.springframework.security.core.userdetails.UserDetails;
-//import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.core.context.SecurityContextHolder;
-// import org.springframework.security.core.userdetails.User;
-//import org.springframework.stereotype.Controller;
 
 @RestController
 public class UserController {
@@ -35,7 +32,7 @@ public class UserController {
     }
 
     @GetMapping("/customers/{id}")
-    public User getUser(@PathVariable Long id) {
+    public User getUser(@PathVariable Integer id) {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User target = users.findById(id).get();
         if(target == null) {
@@ -67,8 +64,7 @@ public class UserController {
     }
 
     @PutMapping("/customers/{id}")
-    public User updateUser(@PathVariable (value = "id") Long id, 
-                        @Valid @RequestBody User newUserInfo) {
+    public User updateUser(@PathVariable (value = "id") Integer id, @Valid @RequestBody User newUserInfo) {
         if(id == null) throw new UserNotFoundException(id);
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if(user.getAuthority().equals("ROLE_USER")) {
