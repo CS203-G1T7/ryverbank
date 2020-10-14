@@ -32,7 +32,7 @@ e.g., what authorities (roles) are granted to the user and whether the account i
 public class User implements UserDetails{
     private static final long serialVersionUID = 1L;
 
-    private @Id @GeneratedValue(strategy = GenerationType.IDENTITY) Long id;
+    private @Id @GeneratedValue(strategy = GenerationType.IDENTITY) Integer id;
     
     @NotNull(message = "Username should not be null")
     private String username;
@@ -86,7 +86,6 @@ public class User implements UserDetails{
         return this.authorities;
     }
 
-    //@Override
     public boolean getActive() {
         return this.active;
     }
@@ -111,10 +110,5 @@ public class User implements UserDetails{
     public boolean isEnabled() {
         return true;
     }
-
-    // @Override
-    // public String getUsername() {
-    //     return this.username;
-    // }
 
 }

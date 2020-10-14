@@ -45,7 +45,7 @@ public class ContentServiceTest {
     @Test
     void updateContent_NotFound_ReturnNull(){
         Content content = new Content("title", "summary", "content", "link", true);
-        Long contentId = 10L;
+        Integer contentId = 10;
         when(contents.findById(contentId)).thenReturn(Optional.empty());
         
         Content updatedContent = contentService.updateContent(contentId, content);

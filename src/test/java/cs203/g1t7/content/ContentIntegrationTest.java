@@ -78,7 +78,7 @@ class ContentIntegrationTest {
 	public void getContent_AuthenticationInvalid_Failure() throws Exception {
 		Content content = new Content("Spring Security Fundamentals", "summary", "content", "link1234567890", false);
 		contents.save(content);
-		Long id = contents.save(content).getId();
+		Integer id = contents.save(content).getId();
 		URI uri = new URI(baseUrl + port + "/contents/" + id);
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_USER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
 		
@@ -100,7 +100,7 @@ class ContentIntegrationTest {
 	@Test
 	public void getContent_ValidContentId_Success() throws Exception {
 		Content content = new Content("Spring Security Fundamentals", "summary", "content", "link1234567890", true);
-		Long id = contents.save(content).getId();
+		Integer id = contents.save(content).getId();
 		URI uri = new URI(baseUrl + port + "/contents/" + id);
 
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_MANAGER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
@@ -139,7 +139,7 @@ class ContentIntegrationTest {
 	@Test
     public void deleteContent_ValidContentId_Success() throws Exception {
 		Content content = contents.save(new Content("Spring Security Fundamentals", "summary", "content", "link1234567890", true));
-        URI uri = new URI(baseUrl + port + "/contents/" + content.getId().longValue());
+        URI uri = new URI(baseUrl + port + "/contents/" + content.getId());
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_MANAGER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
         
         ResponseEntity<Void> result = restTemplate.withBasicAuth("admin", "goodpassword")
@@ -176,7 +176,7 @@ class ContentIntegrationTest {
 	@Test
     public void updateContent_ValidContentId_Success() throws Exception {
 		Content content = contents.save(new Content("Spring Security Fundamentals", "summary", "content", "link1234567890", false));
-        URI uri = new URI(baseUrl + port + "/contents/" + content.getId().longValue());
+        URI uri = new URI(baseUrl + port + "/contents/" + content.getId());
         Content newContentInfo = new Content("Spring Security Fundamentals", "new_summary", "new_content", "new_link1234567890", true);
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_MANAGER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
         

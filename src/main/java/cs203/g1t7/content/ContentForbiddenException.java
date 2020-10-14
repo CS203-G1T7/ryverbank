@@ -8,7 +8,7 @@ public class ContentForbiddenException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public ContentForbiddenException(Long id) {
+    public ContentForbiddenException(Integer id) {
         super("Forbidden to view content " + id);
     }
     public ContentForbiddenException() {
