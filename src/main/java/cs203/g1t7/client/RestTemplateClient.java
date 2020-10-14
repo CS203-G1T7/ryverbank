@@ -23,7 +23,7 @@ public class RestTemplateClient {
                 .build();
     }
     /**
-     * Get a book with given id
+     * Get a content with given id
      * 
      * @param URI
      * @param id
@@ -35,7 +35,7 @@ public class RestTemplateClient {
     }
 
     /**
-     * Add a new book
+     * Add a new content
      * 
      * @param URI
      * @param newContent
@@ -48,7 +48,7 @@ public class RestTemplateClient {
     }
 
     /**
-     * Get a book, but return a HTTP response entity.
+     * Get a content, but return a HTTP response entity.
      * @param URI
      * @param id
      * @return
