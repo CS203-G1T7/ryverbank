@@ -20,12 +20,14 @@ public class TradeController {
     private TradeRepository trade;
     private TransactionRepository transactions;
     private AccountRepository accounts;
+    private AssetRepository portfolio;
     private AccountService accountService;
     private QuoteController quote;
 
-    public TradeController(TransactionRepository transactions, AccountRepository accounts, TradeRepository trade){
+    public TradeController(AssetRepository portfolio, TransactionRepository transactions, AccountRepository accounts, TradeRepository trade){
         this.transactions = transactions;
         this.accounts = accounts;
+        this.portfolio = portfolio;
         this.trade = trade;
     }
 
@@ -35,6 +37,9 @@ public class TradeController {
         Account buyer = accounts.findById(account_id).get();
         
         if (buyer == null) throw new AccountNotFoundException(id);
+
+        List<Asset> buyerPortfolio = portfolio.findByAccountId(account_id);
+        Iterator<Asset> portfolioIter = buyerPortfolio.iterator();
 
         int quantity = newTrade.getQuantity();
         
@@ -70,14 +75,22 @@ public class TradeController {
                 marketTrade = true;
             }
             cost = price * quantity;
+            boolean portFound = false;
+            while (portfolioIter.hasNext()) {
+                Asset temp = portfolioIter.next();
+                if (temp == newTrade.getSymbol()) {
+                    if (temp.getAmount() > newTrade.getAmount()) throw new InvalidTradeException("Amount of assets not enough");
+                    portFound = true;
+                    break;
+                }
+            }
+            if (!portFound) throw new InvalidTradeException("Assets not found on portfolio");
             if (marketTrade) {
                 newTrade.setStatus("filled");
                 // TODO: Generate transactions
                 updateBalanceSender(account_id, newTransactions);
             }
         }
-
-
     }
 
     @GetMapping("/trades/{t_id}")

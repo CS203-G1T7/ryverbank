@@ -28,6 +28,6 @@ public class AssetController {
     public List<Asset> getPortfolio() {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        return portfolio.findByIdAndAccountId(t_id, id);
+        return portfolio.findByCustomerId(user.getId());
     }
 }

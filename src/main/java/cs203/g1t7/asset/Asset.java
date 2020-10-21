@@ -41,7 +41,7 @@ public class Asset {
     
     @ManyToOne 
     @JoinColumn (name = "customer_id", nullable = false)
-    private Account account;
+    private Integer customerid;
 
     public Asset(Integer buyer, Integer symbol, double amount, String action){
         this.buyer = buyer;
