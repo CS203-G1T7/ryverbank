@@ -38,7 +38,7 @@ public class QuoteController {
         String sym = split[7];
         Double price = Double.parseDouble(split[14].substring(1, split[14].length() - 2));
 
-        Quote quote = new Quote(sym, price);
+        Quote quote = new Quote(sym, price, 20000, price - 0.01, 20000, price + 0.01);
 
         return quote;
     }

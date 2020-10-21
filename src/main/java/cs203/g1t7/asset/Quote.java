@@ -21,10 +21,18 @@ import lombok.*;
 @ToString
 public class Quote {
     private String symbol;
-    private Double price;
+    private Double last_price;
+    private int bid_volume;
+    private Double bid;
+    private int ask_volume;
+    private Double ask;
     
-    public Quote(String symbol, Double price){
+    public Quote(String symbol, Double last_price, int bid_volume, Double bid, int ask_volume, Double ask){
         this.symbol = symbol;
-        this.price = price;
+        this.last_price = last_price;
+        this.bid_volume = bid_volume;
+        this.bid = bid;
+        this.ask_volume = ask_volume;
+        this.ask = ask;
     }
 }
