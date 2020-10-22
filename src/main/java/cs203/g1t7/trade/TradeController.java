@@ -50,7 +50,8 @@ public class TradeController {
         if (!action.equals("buy") || !action.equals("sell") {
             throw new InvalidTradeException("Invalid action parameter");
         }
-
+        
+        updateTrade();
         processTrade(newTrade);
     }
 
@@ -165,7 +166,6 @@ public class TradeController {
         while (listIter.hasNext()) {
             Trade tempTrade = listIter.next();
             processTrade(tempTrade);
-
         }
     }
 
