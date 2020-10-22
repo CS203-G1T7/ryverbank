@@ -19,19 +19,18 @@ public class UserServiceImpl implements UserService {
         return users.findAll();
     }
 
-    
     @Override
-    public User getUser(Long id){
+    public User getUser(Integer id){
         return users.findById(id).orElse(null);
     }
     
-    @Override
+    // @Override
     public User addUser(User user) {
         return users.save(user);
     }
     
     @Override
-    public User updateUser(Long id, User newUser){
+    public User updateUser(Integer id, User newUser){
         return users.findById(id).map(user -> {user.setUsername(newUser.getUsername());
             return users.save(user);
         }).orElse(null);
@@ -41,7 +40,7 @@ public class UserServiceImpl implements UserService {
      * Remove a user with the given id
      */
     @Override
-    public void deleteUser(Long id){
+    public void deleteUser(Integer id){
         users.deleteById(id);
     }
 }
