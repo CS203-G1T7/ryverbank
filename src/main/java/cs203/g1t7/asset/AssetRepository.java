@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+import java.util.List;
 
 public interface AssetRepository extends JpaRepository<Asset, Integer>{
     @Query("select asset from Asset asset where asset.customer_id = ?1")
