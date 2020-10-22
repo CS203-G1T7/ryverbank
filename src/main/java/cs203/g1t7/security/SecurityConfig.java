@@ -59,7 +59,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(HttpMethod.POST, "/accounts/*").hasAnyRole("USER")
             // .antMatchers(HttpMethod.PUT, "/accounts/**").hasAnyRole("MANAGER", "USER")
 
+            .antMatchers(HttpMethod.GET, "/portfolio").hasAnyRole("USER")
 
+            .antMatchers(HttpMethod.POST, "/trades").hasAnyRole("USER")
+            .antMatchers(HttpMethod.GET, "/trades/*").hasAnyRole("USER")
+            .antMatchers(HttpMethod.DELETE, "/trades/*").hasAnyRole("USER")
 
             .and()
         .csrf().disable() // CSRF protection is needed only for browser based attacks
