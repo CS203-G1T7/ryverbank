@@ -24,7 +24,7 @@ import lombok.*;
 @NoArgsConstructor
 @EqualsAndHashCode
 public class Content {
-    private @Id @GeneratedValue (strategy = GenerationType.IDENTITY) Long id;
+    private @Id @GeneratedValue (strategy = GenerationType.IDENTITY) Integer id;
 
     @NotNull(message = "Content's title should not be null")
     @Size(min = 5, max = 200, message = "Content's title should be at least 5 characters long")
