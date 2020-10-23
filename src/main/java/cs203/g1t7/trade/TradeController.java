@@ -38,9 +38,6 @@ public class TradeController {
         
         if (buyer == null) throw new AccountNotFoundException(id);
 
-        List<Asset> buyerPortfolio = portfolio.findByAccountId(account_id);
-        Iterator<Asset> portfolioIter = buyerPortfolio.iterator();
-
         int quantity = newTrade.getQuantity();
         
         if (quantity % 100 != 0) throw new InvalidTradeException("Buy or sell have to be in multiples of 100");
@@ -98,6 +95,11 @@ public class TradeController {
         int quantity = newTrade.getQuantity();
         int account_id = newTrade.getAccount_Id();
         Quote tempQuote = quote.getQuote(newTrade.getSymbol());
+        Integer buyerId = newTrade.getBuyer();
+        Account buyer = accountService.getAccount(id);
+        
+        List<Asset> buyerPortfolio = portfolio.findByAccountId(account_id);
+        Iterator<Asset> portfolioIter = buyerPortfolio.iterator();
 
         if (action.equals("buy")) {
             price = newTrade.getBid();
@@ -117,8 +119,8 @@ public class TradeController {
                     newTrade.setFilled_Quantity(tempQuote.getBid_Volume());
                     tempQuote.setBid_Volume(0);
                 }
-                // TODO: Generate transactions
-                updateBalanceSender(account_id, newTransactions);
+                Transaction newTransactions = new Transaction(buyerId, -1, cost);
+                updateBalanceSender(buyerId, newTransactions);
             } else {
                 newTrade.setStatus("open");
             }
@@ -150,8 +152,8 @@ public class TradeController {
                     tempQuote.setAsk_Volume(0);
                 }
                 newTrade.setStatus("filled");
-                // TODO: Generate transactions
-                updateBalanceSender(account_id, newTransactions);
+                Transaction newTransactions = new Transaction(-1, buyerId, cost);
+                updateBalanceReceiver(buyerId, newTransactions);
             } else {
                 newTrade.setStatus("open");
             }
@@ -170,6 +172,8 @@ public class TradeController {
     }
 
     public Transaction updateBalanceSender(Integer id_from, Transaction t) {
+        if (id_from == -1) return transactions.save(t);        
+        
         Account from = accounts.findById(id_from).get();
         double amount = t.getAmount();
 
@@ -181,4 +185,17 @@ public class TradeController {
         }).orElseThrow(() -> new AccountNotFoundException(id_from));
     }
 
+    public Transaction updateBalanceReceiver(Integer id_to, Transaction t) {
+        if (id_to == -1) return transactions.save(t);
+        
+        Account to = accounts.findById(id_to).get();
+        double amount = t.getAmount();
+
+        return accounts.findById(id_to).map(account ->{
+            account.setAvailable_balance(to.getAvailable_balance() + amount);
+            account.setBalance(to.getBalance() + amount);
+            t.setAccount(account);
+            return transactions.save(t);
+        }).orElseThrow(() -> new AccountNotFoundException(id_to));
+    }
 }
