@@ -8,7 +8,7 @@ public class ContentNotFoundException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public ContentNotFoundException(Long id) {
+    public ContentNotFoundException(Integer id) {
         super("Could not find content " + id);
     }
     

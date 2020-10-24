@@ -21,7 +21,7 @@ public class ContentServiceImpl implements ContentService {
 
     
     @Override
-    public Content getContent(Long id){
+    public Content getContent(Integer id){
         return contents.findById(id).orElse(null);
     }
     
@@ -31,7 +31,7 @@ public class ContentServiceImpl implements ContentService {
     }
     
     @Override
-    public Content updateContent(Long id, Content newContentInfo){
+    public Content updateContent(Integer id, Content newContentInfo){
         return contents.findById(id).map(content -> {content.setTitle(newContentInfo.getTitle());
                                                     content.setSummary(newContentInfo.getSummary()); 
                                                     content.setLink(newContentInfo.getLink());
@@ -45,7 +45,7 @@ public class ContentServiceImpl implements ContentService {
      * Remove a content with the given id
      */
     @Override
-    public void deleteContent(Long id){
+    public void deleteContent(Integer id){
         contents.deleteById(id);
     }
 }

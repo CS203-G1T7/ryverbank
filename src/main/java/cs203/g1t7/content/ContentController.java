@@ -38,7 +38,7 @@ public class ContentController {
      * List all content in the system
      * @return list of all contents
      */
-    @GetMapping("/contents")
+    @GetMapping("/api/contents")
     public List<Content> getContents(){
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Content> all = contentService.listContents();
@@ -60,38 +60,17 @@ public class ContentController {
      * @param id
      * @return content with the given id
      */
-    @GetMapping("/contents/{id}")
-    public Content getContent(@PathVariable Long id) {
+    @GetMapping("/api/contents/{id}")
+    public Content getContent(@PathVariable Integer id) {
         Content content = contentService.getContent(id);
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        // Need to handle "content not found" error using proper HTTP status code
-        // In this case it should be HTTP 404
         if(content == null) throw new ContentNotFoundException(id);
 
-        // HTTP 403 "forbidden" when user tries to get unapproved content
         if(!content.getApproved() && user.getAuthority().equals("ROLE_USER")) throw new ContentForbiddenException(id);
 
         return content;
     }
-
-    // // to get a list of content
-    // @GetMapping("/contents")
-    // public Content[] getApprovedContent(){
-    //     List<Content> content = contentService.listContents();
-    //     User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-    //     // Need to handle "content not found" error using proper HTTP status code
-    //     // In this case it should be HTTP 404
-    //     for(int i = 0; i < content.size(); i++) {
-    //         if(content.get(i) == null) throw new ContentNotFoundException(content.get(i).getId());
-    //         if(!content.get(i).getApproved() && user.getAuthority().equals("ROLE_USER")) throw new ContentForbiddenException(content.get(i).getId());
-    //     }
-
-    //     Content[] con_arr = new Content[content.size()];
-
-    //     return content.toArray(con_arr);
-    // }
 
     /**
      * Add a new content with POST request to "/contents"
@@ -100,11 +79,10 @@ public class ContentController {
      * @return list of all contents
      */
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/contents")
+    @PostMapping("/api/contents")
     public Content addContent(@Valid @RequestBody Content newContentInfo) {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        //if(user.getAuthority().equals("ROLE_USER")) throw new ContentForbiddenException();
-        //Content content = contentService.addContent(newContentInfo);
+
         if(user.getAuthority().equals("ROLE_ANALYST")) {
             newContentInfo.setApproved(false);
         }
@@ -117,8 +95,8 @@ public class ContentController {
      * @param newContentInfo
      * @return the updated, or newly added content
      */
-    @PutMapping("/contents/{id}")
-    public Content updateContent(@PathVariable Long id, 
+    @PutMapping("/api/contents/{id}")
+    public Content updateContent(@PathVariable Integer id, 
                                 @Valid @RequestBody Content newContentInfo){
         Content content = contentService.updateContent(id, newContentInfo);
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -132,8 +110,8 @@ public class ContentController {
      * If there is no content with the given "id", throw a ContentNotFoundException
      * @param id
      */
-    @DeleteMapping("/contents/{id}")
-    public void deleteContent(@PathVariable Long id){
+    @DeleteMapping("/api/contents/{id}")
+    public void deleteContent(@PathVariable Integer id){
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try{
             if(user.getAuthority().equals("ROLE_USER")) {
