@@ -46,7 +46,7 @@ public class AccountController {
      * List all accounts in the system
      * @return list of all accounts that the user has
      */
-    @GetMapping("/accounts")
+    @GetMapping("/api/accounts")
     public List<Account> getAccounts(){
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -71,7 +71,7 @@ public class AccountController {
      * @param id
      * @return account with the given id
      */
-    @GetMapping("/accounts/{id}")
+    @GetMapping("/api/accounts/{id}")
     public Account getAccount(@PathVariable int id) {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -90,13 +90,12 @@ public class AccountController {
      * @return list of all accounts
      */
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/accounts")
+    @PostMapping("/api/accounts")
     public Account addAccount(@Valid @RequestBody Account newAccountInfo) {
         Integer user_id = newAccountInfo.getCustomer_id();
         if(!users.existsById(user_id)) throw new AccountAddingFailedInvalidCustomerIdException(user_id);
         User user = users.findById(user_id).get();
 
-        // if(user == null) throw new AccountAddingFailedInvalidCustomerIdException(user_id);
         newAccountInfo.setTransactions(new ArrayList<Transaction>());
 
         return accountService.addAccount(newAccountInfo);

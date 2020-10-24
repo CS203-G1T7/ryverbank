@@ -106,7 +106,7 @@ class TransactionIntegrationTest {
 
 		accounts.save(acc1);
 
-		URI uri = new URI(baseUrl + port + "/accounts/" + acc1.getId() + "/transactions");
+		URI uri = new URI(baseUrl + port + "/api/accounts/" + acc1.getId() + "/transactions");
         
         // Need to use array with a ReponseEntity here
 		ResponseEntity<Transaction[]> result = restTemplate.withBasicAuth("user_1", "01_user_01").getForEntity(uri, Transaction[].class);
@@ -117,25 +117,48 @@ class TransactionIntegrationTest {
 	}
 
 	// GET ACCOUNT FOR ROLE_USER w/ INVALID ID
-	@Test
-	public void getTransaction_AuthenticationInvalid_Failure() throws Exception {
-        // ADD IN USER
-        users.save(new User("user_1", encoder.encode("01_user_01"), "ROLE_USER", "holahola", "S9794462H", "81235765", "Jalan Durian 78 Mandala", true));
-        users.save(new User("user_2", encoder.encode("02_user_02"), "ROLE_USER", "Stitch", "S9794462H", "81235765", "Jalan Durian 78 Mandala", true));
+	// @Test
+	// public void getTransaction_AuthenticationInvalid_Failure() throws Exception {
+    //     // ADD IN USER
+    //     users.save(new User("user_1", encoder.encode("01_user_01"), "ROLE_USER", "holahola", "S9794462H", "81235765", "Jalan Durian 78 Mandala", true));
+    //     users.save(new User("user_2", encoder.encode("02_user_02"), "ROLE_USER", "Stitch", "S9794462H", "81235765", "Jalan Durian 78 Mandala", true));
 
-		// ADD IN ACCOUNT FOR EXISTING USER
-		Account acc1 = new Account(1, 5000, 5000);
-        accounts.save(acc1);
-        accounts.save(new Account(2, 5000, 5000));
+	// 	// ADD IN ACCOUNT FOR EXISTING USER
+	// 	Account acc1 = new Account(1, 5000, 5000);
+    //     accounts.save(acc1);
+    //     accounts.save(new Account(2, 5000, 5000));
         
-		URI uri = new URI(baseUrl + port + "/accounts/" + acc1.getId() + "/transactions");
+	// 	URI uri = new URI(baseUrl + port + "/accounts/" + acc1.getId() + "/transactions");
 		
-		// ResponseEntity<Transaction> result = restTemplate.withBasicAuth("user_2", "02_user_02").getForEntity(uri, Transaction.class);
-		ResponseEntity<Transaction[]> result = restTemplate.withBasicAuth("user_1", "01_user_01").getForEntity(uri, Transaction[].class);
-		Transaction[] transaction = result.getBody();
+	// 	// ResponseEntity<Transaction> result = restTemplate.withBasicAuth("user_2", "02_user_02").getForEntity(uri, Transaction.class);
+	// 	ResponseEntity<Transaction[]> result = restTemplate.withBasicAuth("user_1", "01_user_01").getForEntity(uri, Transaction[].class);
+	// 	Transaction[] transaction = result.getBody();
 			
-		assertEquals(403, result.getStatusCode().value());
-	}
+	// 	assertEquals(403, result.getStatusCode().value());
+	// }
+
+	@Test
+  public void getTransaction_AuthenticationInvalid_Failure() throws Exception {
+        // ADD IN USER
+        User user_1 = users.save(new User("user_1", encoder.encode("01_user_01"), "ROLE_USER", "holahola", "S9794462H", "81235765", "Jalan Durian 78 Mandala", true));
+        User user_2 = users.save(new User("user_2", encoder.encode("02_user_02"), "ROLE_USER", "Stitch", "S9794462H", "81235765", "Jalan Durian 78 Mandala", true));
+
+    // ADD IN ACCOUNT FOR EXISTING USER
+    Account acc1 = new Account(user_1.getId(), 5000, 5000);
+    acc1 = accounts.save(acc1);
+    accounts.save(new Account(user_2.getId(), 5000, 5000));
+        
+    URI uri = new URI(baseUrl + port + "/api/accounts/" + acc1.getId() + "/transactions");
+    // System.out.println("uri = " + uri);
+
+    // ResponseEntity<Void> result = restTemplate.withBasicAuth("user_2", "02_user_02").getForEntity(uri, void.class);
+
+    ResponseEntity<Transaction[]> result = restTemplate.withBasicAuth("user_2", "02_user_02").getForEntity(uri, Transaction[].class);
+    // ResponseEntity<Transaction[]> result = restTemplate.withBasicAuth("user_1", "01_user_01").getForEntity(uri, Transaction[].class);
+    Transaction[] transaction = result.getBody();
+      
+    assertEquals(403, result.getStatusCode().value());
+  }
 
 	@Test
 	public void getTransaction_InvalidId_Failure() throws Exception {
@@ -160,7 +183,7 @@ class TransactionIntegrationTest {
 		t_s.add(transaction);
 		account.setTransactions(t_s);
 
-        URI uri = new URI(baseUrl + port + "/accounts/" + account.getId() + "/transactions/2");
+        URI uri = new URI(baseUrl + port + "/api/accounts/" + account.getId() + "/transactions/2");
 
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_MANAGER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
 		
@@ -186,7 +209,7 @@ class TransactionIntegrationTest {
 
 		accounts.save(acc1);
 
-		URI uri = new URI(baseUrl + port + "/accounts/" + acc1.getId() + "/transactions/" + trans1.getId());
+		URI uri = new URI(baseUrl + port + "/api/accounts/" + acc1.getId() + "/transactions/" + trans1.getId());
 
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_MANAGER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
 		
@@ -208,7 +231,7 @@ class TransactionIntegrationTest {
         accounts.save(acc1);
 		accounts.save(acc2);
 
-		URI uri = new URI(baseUrl + port + "/accounts/" + acc1.getId() + "/transactions");
+		URI uri = new URI(baseUrl + port + "/api/accounts/" + acc1.getId() + "/transactions");
 
 		Transaction trans1 = new Transaction(acc1.getId(), acc2.getId(), 5000);
 		trans1.setAccount(acc1);
@@ -239,7 +262,7 @@ class TransactionIntegrationTest {
         accounts.save(acc1);
 		accounts.save(acc2);
 
-		URI uri = new URI(baseUrl + port + "/accounts/" + acc1.getId() + "/transactions");
+		URI uri = new URI(baseUrl + port + "/api/accounts/" + acc1.getId() + "/transactions");
 
 		Transaction trans1 = new Transaction(acc1.getId(), acc2.getId(), 5000);
 		trans1.setAccount(acc1);

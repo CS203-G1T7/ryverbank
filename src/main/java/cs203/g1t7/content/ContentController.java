@@ -38,7 +38,7 @@ public class ContentController {
      * List all content in the system
      * @return list of all contents
      */
-    @GetMapping("/contents")
+    @GetMapping("/api/contents")
     public List<Content> getContents(){
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Content> all = contentService.listContents();
@@ -60,7 +60,7 @@ public class ContentController {
      * @param id
      * @return content with the given id
      */
-    @GetMapping("/contents/{id}")
+    @GetMapping("/api/contents/{id}")
     public Content getContent(@PathVariable Integer id) {
         Content content = contentService.getContent(id);
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -79,7 +79,7 @@ public class ContentController {
      * @return list of all contents
      */
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/contents")
+    @PostMapping("/api/contents")
     public Content addContent(@Valid @RequestBody Content newContentInfo) {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -95,7 +95,7 @@ public class ContentController {
      * @param newContentInfo
      * @return the updated, or newly added content
      */
-    @PutMapping("/contents/{id}")
+    @PutMapping("/api/contents/{id}")
     public Content updateContent(@PathVariable Integer id, 
                                 @Valid @RequestBody Content newContentInfo){
         Content content = contentService.updateContent(id, newContentInfo);
@@ -110,7 +110,7 @@ public class ContentController {
      * If there is no content with the given "id", throw a ContentNotFoundException
      * @param id
      */
-    @DeleteMapping("/contents/{id}")
+    @DeleteMapping("/api/contents/{id}")
     public void deleteContent(@PathVariable Integer id){
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try{

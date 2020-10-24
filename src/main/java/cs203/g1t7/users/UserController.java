@@ -24,14 +24,14 @@ public class UserController {
         this.encoder = encoder;
     }
 
-    @GetMapping("/customers")
+    @GetMapping("/api/customers")
     public List<User> getUsers() {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if(user.getAuthority().equals("ROLE_USER")) throw new UserForbiddenException();
         return users.findAll();
     }
 
-    @GetMapping("/customers/{id}")
+    @GetMapping("/api/customers/{id}")
     public User getUser(@PathVariable Integer id) {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User target = users.findById(id).get();
@@ -53,7 +53,7 @@ public class UserController {
      * @return
      */
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/customers")
+    @PostMapping("/api/customers")
     public User addUser(@Valid @RequestBody User user) {
         NricValidation validate = new NricValidation();
         String nric = user.getNric();
@@ -64,7 +64,7 @@ public class UserController {
         return users.save(user);
     }
 
-    @PutMapping("/customers/{id}")
+    @PutMapping("/api/customers/{id}")
     public User updateUser(@PathVariable (value = "id") Integer id, @Valid @RequestBody User newUserInfo) {
         if(id == null) throw new UserNotFoundException(id);
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();

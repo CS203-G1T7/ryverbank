@@ -69,7 +69,7 @@ class AccountIntegrationTest {
         // ADD IN ACCOUNT FOR EXISTING USER
         accounts.save(new Account(1, 5000, 5000));
 
-		URI uri = new URI(baseUrl + port + "/accounts");
+		URI uri = new URI(baseUrl + port + "/api/accounts");
         
         //ADD IN MANAGER
 		users.save(new User("manager_1", encoder.encode("01_manager_01"), "ROLE_MANAGER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
@@ -93,7 +93,7 @@ class AccountIntegrationTest {
         Account acc1 = accounts.save(new Account(1, 5000, 5000));
         Account acc2 = accounts.save(new Account(2, 5000, 5000));
         
-		URI uri = new URI(baseUrl + port + "/accounts/" + acc1.getId());
+		URI uri = new URI(baseUrl + port + "/api/accounts/" + acc1.getId());
 		
 		ResponseEntity<Account> result = restTemplate.withBasicAuth("user_2", "02_user_02").getForEntity(uri, Account.class);
 			
@@ -102,7 +102,7 @@ class AccountIntegrationTest {
 
 	@Test
 	public void getAccount_InvalidId_Failure() throws Exception {
-		URI uri = new URI(baseUrl + port + "/accounts/1");
+		URI uri = new URI(baseUrl + port + "/api/accounts/1");
         User user1 = users.save(new User("user_1", encoder.encode("01_user_01"), "ROLE_USER", "holahola", "S9794462H", "81235765", "Jalan Durian 78 Mandala", true));
 		
 		ResponseEntity<Account> result = restTemplate.withBasicAuth("user_1", "01_user_01").getForEntity(uri, Account.class);
@@ -115,7 +115,7 @@ class AccountIntegrationTest {
         User user = users.save(new User("user_1", encoder.encode("01_user_01"), "ROLE_USER", "holahola", "S9794462H", "81235765", "Jalan Durian 78 Mandala", true));
         Account account = accounts.save(new Account(user.getId(), 5000, 5000));
 
-		URI uri = new URI(baseUrl + port + "/accounts/" + account.getId());
+		URI uri = new URI(baseUrl + port + "/api/accounts/" + account.getId());
 		
 		ResponseEntity<Account> result = restTemplate.withBasicAuth("user_1", "01_user_01").getForEntity(uri, Account.class);
 			
@@ -124,7 +124,7 @@ class AccountIntegrationTest {
 
 	@Test
 	public void addAccount_AuthenticationValid_Success() throws Exception {
-		URI uri = new URI(baseUrl + port + "/accounts");
+		URI uri = new URI(baseUrl + port + "/api/accounts");
 		User user = users.save(new User("user_1", encoder.encode("01_user_01"), "ROLE_USER", "holahola", "S9794462H", "81235765", "Jalan Durian 78 Mandala", true));
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_MANAGER", "jimtan", "S1932701I", "81235768", "Jalan Cilandak 78 Mandala", true));
         
@@ -139,7 +139,7 @@ class AccountIntegrationTest {
 
 	@Test
 	public void addAccount_AuthenticationInvalid_Failure() throws Exception {
-		URI uri = new URI(baseUrl + port + "/accounts");
+		URI uri = new URI(baseUrl + port + "/api/accounts");
         users.save(new User("user_1", encoder.encode("01_user_01"), "ROLE_USER", "holahola", "S9794462H", "81235765", "Jalan Durian 78 Mandala", true));
         users.save(new User("user_2", encoder.encode("02_user_02"), "ROLE_USER", "Stitch", "S9794462H", "81235765", "Jalan Durian 78 Mandala", true));
 

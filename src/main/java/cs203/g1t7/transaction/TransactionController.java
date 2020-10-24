@@ -26,7 +26,7 @@ public class TransactionController {
         this.accountService = accountService;
     }
 
-    @GetMapping("/accounts/{id}/transactions/{t_id}")
+    @GetMapping("/api/accounts/{id}/transactions/{t_id}")
     public Optional<Transaction> getTransactions(@PathVariable (value = "id") Integer id,
                                                 @PathVariable (value = "t_id") Integer t_id) {
         if(!accounts.existsById(id)) {
@@ -43,7 +43,7 @@ public class TransactionController {
         return transactions.findByIdAndAccountId(t_id, id);
     }
 
-    @GetMapping("/accounts/{id}/transactions")
+    @GetMapping("/api/accounts/{id}/transactions")
     public List<Transaction> getTransactions(@PathVariable Integer id) {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if(!accounts.existsById(id)) {
@@ -54,13 +54,11 @@ public class TransactionController {
 
         if((current.getCustomer_id() != user.getId()) && user.getAuthority().equals("ROLE_USER")) throw new TransactionForbiddenException();
 
-        // if(transactions.findByAccountId(id) == null) throw new TransactionNotFoundException(id);
-
         return transactions.findByAccountId(id);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/accounts/{id}/transactions")
+    @PostMapping("/api/accounts/{id}/transactions")
     public Transaction addTransaction(@PathVariable Integer id, @Valid @RequestBody Transaction newTransactionInfo) {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Account from = accounts.findById(id).get();
