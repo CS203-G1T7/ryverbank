@@ -1,9 +1,9 @@
 ### ROLE_MANAGER views all customers
-GET http://localhost:5353/customers
+GET http://localhost:5353/api/customers
 Authorization: Basic manager_1 01_manager_01
 
 ### ROLE_MANAGER adding a new ROLE_USER
-POST http://localhost:5353/customers
+POST http://localhost:5353/api/customers
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
@@ -19,11 +19,11 @@ Authorization: Basic manager_1 01_manager_01
 }
 
 ### ROLE_USER views his/her own account
-GET http://localhost:5353/customers/4
+GET http://localhost:5353/api/customers/4
 Authorization: Basic goodusers bad?password
 
 ### ROLE_USER updates his/her own account
-PUT http://localhost:5353/customers/4
+PUT http://localhost:5353/api/customers/4
 Content-Type: application/json
 Authorization: Basic goodusers bad?password
 
@@ -39,7 +39,7 @@ Authorization: Basic goodusers bad?password
 }
 
 ### ROLE_MANAGER adds a new user with incorrect field (NRIC)
-POST http://localhost:5353/customers
+POST http://localhost:5353/api/customers
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
@@ -55,7 +55,7 @@ Authorization: Basic manager_1 01_manager_01
 }
 
 ### ROLE_MANAGER deactivates existing ROLE_USER
-PUT http://localhost:5353/customers/4
+PUT http://localhost:5353/api/customers/4
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
@@ -71,7 +71,7 @@ Authorization: Basic manager_1 01_manager_01
 }
 
 ### ROLE_ANALYST unable to activate existing ROLE_USER
-PUT http://localhost:5353/customers/4
+PUT http://localhost:5353/api/customers/4
 Content-Type: application/json
 Authorization: Basic analyst_1 01_analyst_01
 
@@ -87,5 +87,5 @@ Authorization: Basic analyst_1 01_analyst_01
 }
 
 ### ROLE_USER unable to view his/her own account since it's deactivated
-GET http://localhost:5353/customers/4
+GET http://localhost:5353/api/customers/4
 Authorization: Basic goodusers Ilovewonton

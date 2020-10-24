@@ -28,12 +28,4 @@ public class AccountServiceImpl implements AccountService {
     public Account addAccount(Account account) {
         return accounts.save(account);
     }
-    
-    // @Override
-    // public Account updateAccount(Integer id, Account newAccountInfo){
-    //     return accounts.findById(id).map(account -> {account.setBalance(newAccountInfo.getBalance());
-    //                                                 account.setAvailable_balance(newAccountInfo.getAvailable_balance()); 
-    //         return accounts.save(account);
-    //     }).orElse(null);
-    // }
 }
