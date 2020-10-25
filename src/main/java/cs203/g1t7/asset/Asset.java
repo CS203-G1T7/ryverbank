@@ -13,8 +13,6 @@ import javax.validation.constraints.*;
 
 import cs203.g1t7.account.Account;
 
-// import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import lombok.*;
 
 
@@ -34,16 +32,16 @@ public class Asset {
 
     @NotNull (message = "Stock symbol must not be null.")
     @Column (name = "stock_symbol")
-    private Integer symbol;
+    private String symbol;
     
     @NotNull (message = "Must specify transaction amount.")
     private double amount;
     
     @ManyToOne 
     @JoinColumn (name = "customer_id", nullable = false)
-    private Integer customerid;
+    private Account customer;
 
-    public Asset(Integer buyer, Integer symbol, double amount, String action){
+    public Asset(Integer buyer, String symbol, double amount){
         this.buyer = buyer;
         this.symbol = symbol;
         this.amount = amount;

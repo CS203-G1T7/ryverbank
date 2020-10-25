@@ -4,22 +4,22 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Iterator;
+import javax.validation.Valid;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-
-import javax.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.dao.EmptyResultDataAccessException;
 
 import cs203.g1t7.transaction.*;
 import cs203.g1t7.account.*;
 import cs203.g1t7.users.*;
 import cs203.g1t7.asset.*;
+
+import org.springframework.dao.EmptyResultDataAccessException;
 
 @RestController
 public class TradeController {
@@ -39,13 +39,10 @@ public class TradeController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/trades")
-    public void addTrade(@PathVariable Integer account_id, @Valid @RequestBody Trade newTrade) {
+    public Trade addTrade(@PathVariable Integer account_id, @Valid @RequestBody Trade newTrade) {
         Account buyer = accounts.findById(account_id).get();
         
         if (buyer == null) throw new AccountNotFoundException(account_id);
-
-        List<Asset> buyerPortfolio = portfolio.findByAccountId(account_id);
-        Iterator<Asset> portfolioIter = buyerPortfolio.iterator();
 
         int quantity = newTrade.getQuantity();
         
@@ -59,30 +56,34 @@ public class TradeController {
         
         updateTrade();
         processTrade(newTrade);
+        return newTrade;
     }
 
     @GetMapping("/trades/{t_id}")
-    public Optional<Trade> getTrade(@PathVariable (value = "t_id") Integer t_id) {
+    public Trade getTrade(@PathVariable (value = "t_id") Integer t_id) {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        // if(id != user.getId()) throw new TradeForbiddenException();
+        Integer userId = user.getId();
 
-        // if(!accounts.existsById(id)) throw new AccountNotFoundException(id);
-        
-        return trade.findByIdAndBuyer(t_id, user.getId());
+        if(userId == null) throw new TradeForbiddenException();
+
+        if(!accounts.existsById(userId)) {
+            throw new AccountNotFoundException(userId);
+        }
+        return trade.findByIdAndAccountId(t_id, userId).get();
     }
 
     @DeleteMapping("/trades/{id}")
     public void deleteTrade(@PathVariable Integer id){
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        try {
-            // Trade temp = trade.findById(id);
-            // if(user.getId() != temp.getAccount()) {
-            //     throw new TradeForbiddenException(id);
-            // }
-            // temp.setStatus("cancelled");
-         } catch(EmptyResultDataAccessException e) {
-            // throw new TradeNotFoundException(id);
+        try{
+            Trade temp = trade.findById(id).get();
+            if(user.getId() != temp.getAccount().getId()) {
+                throw new TradeForbiddenException(id);
+            }
+            temp.setStatus("cancelled");
+         }catch(EmptyResultDataAccessException e) {
+            throw new TradeNotFoundException(id);
          }
     }
 
@@ -101,64 +102,69 @@ public class TradeController {
         double cost;
         boolean marketTrade = false;
         int quantity = newTrade.getQuantity();
-        int account_id = newTrade.getId();
-        // Quote tempQuote = quote.getBid(newTrade.getSymbol());
+        int account_id = newTrade.getAccount().getId();
+        Quote tempQuote = quote.getQuote(newTrade.getSymbol());
+        Integer buyerId = newTrade.getBuyer();
+        Account buyer = accountService.getAccount(buyerId);
+        
+        List<Asset> buyerPortfolio = portfolio.findByCustomerId(account_id);
+        Iterator<Asset> portfolioIter = buyerPortfolio.iterator();
 
         String action = newTrade.getAction();
 
         if (action.equals("buy")) {
             price = newTrade.getBid();
             if (price == 0) {
-                // price = tempQuote.getBid();
+                price = tempQuote.getBid();
                 marketTrade = true;
             }
             cost = price * quantity;
-            // if (cost > buyer.getBalance()) throw new InsufficientFundsException();
+            if (cost > buyer.getBalance()) throw new InsufficientFundsException();
             if (marketTrade) {
-                // if (tempQuote.getBid_Volume() >= newTrade.getQuantity()) {
-                //     newTrade.setStatus("filled");
-                //     newTrade.setFilled_Quantity(newTrade.getQuantity());
-                //     tempQuote.setBid_Volume(tempQuote.getBid_Volume() - newTrade.getQuantity());
-                // } else {
-                //     newTrade.setStatus("partial-filled");
-                //     newTrade.setFilled_Quantity(tempQuote.getBid_Volume());
-                //     tempQuote.setBid_Volume(0);
-                // }
-                // TODO: Generate transactions
-                // updateBalanceSender(account_id, newTransactions);
+                if (tempQuote.getBid_volume() >= newTrade.getQuantity()) {
+                    newTrade.setStatus("filled");
+                    newTrade.setFilled_quantity(newTrade.getQuantity());
+                    tempQuote.setBid_volume(tempQuote.getBid_volume() - newTrade.getQuantity());
+                } else {
+                    newTrade.setStatus("partial-filled");
+                    newTrade.setFilled_quantity(tempQuote.getBid_volume());
+                    tempQuote.setBid_volume(0);
+                }
+                Transaction newTransactions = new Transaction(buyerId, -1, cost);
+                updateBalanceSender(buyerId, newTransactions);
             } else {
                 newTrade.setStatus("open");
             }
         } else {
             price = newTrade.getAsk();
-            // if (price = 0) {
-            //     price = tempQuote.getAsk();
-            //     marketTrade = true;
-            // }
+            if (price == 0) {
+                price = tempQuote.getAsk();
+                marketTrade = true;
+            }
             cost = price * quantity;
             boolean portFound = false;
-            // while (portfolioIter.hasNext()) {
-                // Asset temp = portfolioIter.next();
-                // if (temp == newTrade.getSymbol()) {
-                //     if (temp.getAmount() > newTrade.getQuantity()) throw new InvalidTradeException("Amount of assets not enough");
-                //     portFound = true;
-                //     break;
-                // }
-            // }
+            while (portfolioIter.hasNext()) {
+                Asset temp = portfolioIter.next();
+                if (temp.getSymbol() == newTrade.getSymbol()) {
+                    if (temp.getAmount() > newTrade.getQuantity()) throw new InvalidTradeException("Amount of assets not enough");
+                    portFound = true;
+                    break;
+                }
+            }
             if (!portFound) throw new InvalidTradeException("Assets not found on portfolio");
             if (marketTrade) {
-                // if (tempQuote.getAsk_Volume() >= newTrade.getQuantity()) {
-                //     newTrade.setStatus("filled");
-                //     // newTrade.setFilled_Quantity(newTrade.getQuantity());
-                //     // tempQuote.setAsk_Volume(tempQuote.getAsk_Volume() - newTrade.getQuantity());
-                // } else {
-                //     newTrade.setStatus("partial-filled");
-                //     // newTrade.setFilled_Quantity(tempQuote.getAsk_Volume());
-                //     // tempQuote.setAsk_Volume(0);
-                // }
-                // newTrade.setStatus("filled");
-                // // TODO: Generate transactions
-                // // updateBalanceSender(account_id, newTransactions);
+                if (tempQuote.getAsk_volume() >= newTrade.getQuantity()) {
+                    newTrade.setStatus("filled");
+                    newTrade.setFilled_quantity(newTrade.getQuantity());
+                    tempQuote.setAsk_volume(tempQuote.getAsk_volume() - newTrade.getQuantity());
+                } else {
+                    newTrade.setStatus("partial-filled");
+                    newTrade.setFilled_quantity(tempQuote.getAsk_volume());
+                    tempQuote.setAsk_volume(0);
+                }
+                newTrade.setStatus("filled");
+                Transaction newTransactions = new Transaction(-1, buyerId, cost);
+                updateBalanceReceiver(buyerId, newTransactions);
             } else {
                 newTrade.setStatus("open");
             }
@@ -177,6 +183,8 @@ public class TradeController {
     }
 
     public Transaction updateBalanceSender(Integer id_from, Transaction t) {
+        if (id_from == -1) return transactions.save(t);        
+        
         Account from = accounts.findById(id_from).get();
         double amount = t.getAmount();
 
@@ -188,4 +196,17 @@ public class TradeController {
         }).orElseThrow(() -> new AccountNotFoundException(id_from));
     }
 
+    public Transaction updateBalanceReceiver(Integer id_to, Transaction t) {
+        if (id_to == -1) return transactions.save(t);
+        
+        Account to = accounts.findById(id_to).get();
+        double amount = t.getAmount();
+
+        return accounts.findById(id_to).map(account ->{
+            account.setAvailable_balance(to.getAvailable_balance() + amount);
+            account.setBalance(to.getBalance() + amount);
+            t.setAccount(account);
+            return transactions.save(t);
+        }).orElseThrow(() -> new AccountNotFoundException(id_to));
+    }
 }
