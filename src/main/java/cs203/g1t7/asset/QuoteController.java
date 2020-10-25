@@ -25,7 +25,7 @@ public class QuoteController {
      * @param id
      * @return content with the given id
      */
-    @GetMapping("/api/accounts/quote/{asset_id}")
+    @GetMapping("/api/stocks/{asset_id}")
     public static Quote getQuote(@PathVariable String asset_id)
     {
         final String uri = String.format("https://finnhub.io/api/v1/stock/price-target?symbol=%s&token=bu3iu1v48v6up0bhtaeg", asset_id);
