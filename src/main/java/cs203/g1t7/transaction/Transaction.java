@@ -1,19 +1,9 @@
 package cs203.g1t7.transaction;
 
-// import java.util.List;
-
-// import javax.persistence.CascadeType;
-// import javax.persistence.Entity;
-// import javax.persistence.GeneratedValue;
-// import javax.persistence.GenerationType;
-// import javax.persistence.Id;
-// import javax.persistence.ManyToOne;
 import javax.persistence.*;
 import javax.validation.constraints.*;
 
 import cs203.g1t7.account.Account;
-
-// import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.*;
 
@@ -40,7 +30,7 @@ public class Transaction {
     private double amount;
     
     @ManyToOne 
-    @JoinColumn (name = "customer_id", nullable = false)
+    @JoinColumn (name = "account_id", nullable = false)
     private Account account;
 
     public Transaction(Integer from, Integer to, double amount){

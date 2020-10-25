@@ -7,5 +7,4 @@ public interface AccountService {
     List<Account> listAccounts();
     Account getAccount(Integer id);
     Account addAccount(Account account);
-    // Account updateAccount(Integer id, Account account);
 }

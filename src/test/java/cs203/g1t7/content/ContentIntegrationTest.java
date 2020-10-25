@@ -62,7 +62,7 @@ class ContentIntegrationTest {
 	public void getContent_AuthenticationValid_Success() throws Exception {
 		Content content = new Content("Spring Security Fundamentals", "summary", "content", "link1234567890", false);
 		contents.save(content);
-		URI uri = new URI(baseUrl + port + "/contents");
+		URI uri = new URI(baseUrl + port + "/api/contents");
 		
 		users.save(new User("manager_1", encoder.encode("01_manager_01"), "ROLE_MANAGER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
 		// Need to use array with a ReponseEntity here
@@ -79,17 +79,17 @@ class ContentIntegrationTest {
 		Content content = new Content("Spring Security Fundamentals", "summary", "content", "link1234567890", false);
 		contents.save(content);
 		Integer id = contents.save(content).getId();
-		URI uri = new URI(baseUrl + port + "/contents/" + id);
+		URI uri = new URI(baseUrl + port + "/api/contents/" + id);
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_USER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
 		
 		ResponseEntity<Content> result = restTemplate.withBasicAuth("admin", "goodpassword").getForEntity(uri, Content.class);
 			
-		assertEquals(403, result.getStatusCode().value());
+		assertEquals(404, result.getStatusCode().value());
 	}
 
 	@Test
 	public void getContent_InvalidId_Failure() throws Exception {
-		URI uri = new URI(baseUrl + port + "/contents/1");
+		URI uri = new URI(baseUrl + port + "/api/contents/1");
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_MANAGER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
 		
 		ResponseEntity<Content> result = restTemplate.withBasicAuth("admin", "goodpassword").getForEntity(uri, Content.class);
@@ -101,7 +101,7 @@ class ContentIntegrationTest {
 	public void getContent_ValidContentId_Success() throws Exception {
 		Content content = new Content("Spring Security Fundamentals", "summary", "content", "link1234567890", true);
 		Integer id = contents.save(content).getId();
-		URI uri = new URI(baseUrl + port + "/contents/" + id);
+		URI uri = new URI(baseUrl + port + "/api/contents/" + id);
 
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_MANAGER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
 		
@@ -113,7 +113,7 @@ class ContentIntegrationTest {
 
 	@Test
 	public void addContent_AuthenticationValid_Success() throws Exception {
-		URI uri = new URI(baseUrl + port + "/contents");
+		URI uri = new URI(baseUrl + port + "/api/contents");
 		Content content = new Content("Spring Security Fundamentals", "summary", "content", "link1234567890", true);
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_MANAGER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
 
@@ -126,7 +126,7 @@ class ContentIntegrationTest {
 
 	@Test
 	public void addContent_AuthenticationInvalid_Failure() throws Exception {
-		URI uri = new URI(baseUrl + port + "/contents");
+		URI uri = new URI(baseUrl + port + "/api/contents");
 		Content content = new Content("Spring Security Fundamentals", "summary", "content", "link1234567890", true);
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_USER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
 
@@ -139,7 +139,7 @@ class ContentIntegrationTest {
 	@Test
     public void deleteContent_ValidContentId_Success() throws Exception {
 		Content content = contents.save(new Content("Spring Security Fundamentals", "summary", "content", "link1234567890", true));
-        URI uri = new URI(baseUrl + port + "/contents/" + content.getId());
+        URI uri = new URI(baseUrl + port + "/api/contents/" + content.getId());
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_MANAGER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
         
         ResponseEntity<Void> result = restTemplate.withBasicAuth("admin", "goodpassword")
@@ -153,7 +153,7 @@ class ContentIntegrationTest {
 
     @Test
     public void deleteContent_InvalidContentId_Failure() throws Exception {
-        URI uri = new URI(baseUrl + port + "/contents/1");
+        URI uri = new URI(baseUrl + port + "/api/contents/1");
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_MANAGER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
         
         ResponseEntity<Void> result = restTemplate.withBasicAuth("admin", "goodpassword")
@@ -165,7 +165,7 @@ class ContentIntegrationTest {
 	@Test
 	public void deleteContent_InvalidAuthentication_Failure() throws Exception {
 		Content content = contents.save(new Content("Spring Security Fundamentals", "summary", "content", "link1234567890", true));
-		URI uri = new URI(baseUrl + port + "/contents/1");
+		URI uri = new URI(baseUrl + port + "/api/contents/1");
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_USER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
 
 		ResponseEntity<Void> result = restTemplate.withBasicAuth("admin", "goodpassword")
@@ -176,7 +176,7 @@ class ContentIntegrationTest {
 	@Test
     public void updateContent_ValidContentId_Success() throws Exception {
 		Content content = contents.save(new Content("Spring Security Fundamentals", "summary", "content", "link1234567890", false));
-        URI uri = new URI(baseUrl + port + "/contents/" + content.getId());
+        URI uri = new URI(baseUrl + port + "/api/contents/" + content.getId());
         Content newContentInfo = new Content("Spring Security Fundamentals", "new_summary", "new_content", "new_link1234567890", true);
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_MANAGER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
         
@@ -189,7 +189,7 @@ class ContentIntegrationTest {
 
     @Test
     public void updateContent_InvalidContentId_Failure() throws Exception {
-        URI uri = new URI(baseUrl + port + "/contents/1");
+        URI uri = new URI(baseUrl + port + "/api/contents/1");
         Content newContentInfo = new Content("Spring Security Fundamentals", "new_summary", "new_content", "new_link1234567890", true);
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_MANAGER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
         
@@ -201,7 +201,7 @@ class ContentIntegrationTest {
 	
 	@Test
     public void updateContent_InvalidAuthentication_Failure() throws Exception {
-        URI uri = new URI(baseUrl + port + "/contents/1");
+        URI uri = new URI(baseUrl + port + "/api/contents/1");
         Content newContentInfo = new Content("Spring Security Fundamentals", "new_summary", "new_content", "new_link1234567890", false);
 		users.save(new User("admin", encoder.encode("goodpassword"), "ROLE_USER", "jimtan", "S9794462H", "81235768", "Jalan Cilandak 78 Mandala", true));
         

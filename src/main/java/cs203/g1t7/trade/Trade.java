@@ -52,7 +52,7 @@ public class Trade {
     private String status;
     
     @ManyToOne 
-    @JoinColumn (name = "customer_id", nullable = false)
+    // @JoinColumn (name = "customer_id", nullable = false)
     private Account account;
 
     public Trade(Integer buyer, String symbol, Integer quantity, String action, double bid, double ask,

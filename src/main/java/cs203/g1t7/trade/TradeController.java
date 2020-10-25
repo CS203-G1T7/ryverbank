@@ -69,7 +69,7 @@ public class TradeController {
 
         // if(!accounts.existsById(id)) throw new AccountNotFoundException(id);
         
-        return trade.findByIdAndAccountId(t_id, user.getId());
+        return trade.findByIdAndBuyer(t_id, user.getId());
     }
 
     @DeleteMapping("/trades/{id}")

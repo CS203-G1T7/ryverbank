@@ -9,9 +9,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 public interface AssetRepository extends JpaRepository<Asset, Integer>{
-    @Query("select asset from Asset asset where asset.customer_id = ?1")
+    // @Query("select asset from Asset asset where asset.customer_id = ?1")
     List<Asset> findByCustomerId(Integer custid);
 
-    @Query("select asset from Asset asset where asset.buyer_account_id = ?1")
+    // @Query("select asset from Asset asset where asset.buyer_account_id = ?1")
     List<Asset> findByAccountId(Integer acctid);
 }
