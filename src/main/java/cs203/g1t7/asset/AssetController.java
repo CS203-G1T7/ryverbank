@@ -24,7 +24,7 @@ public class AssetController {
         this.accounts = accounts;
     }
 
-    @GetMapping("/portfolio")
+    @GetMapping("/api/portfolio")
     public List<Asset> getPortfolio() {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 

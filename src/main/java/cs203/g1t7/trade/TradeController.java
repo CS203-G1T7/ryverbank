@@ -38,7 +38,7 @@ public class TradeController {
     }
 
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/trades")
+    @PostMapping("/api/trades")
     public Trade addTrade(@PathVariable Integer account_id, @Valid @RequestBody Trade newTrade) {
         Account buyer = accounts.findById(account_id).get();
         
@@ -59,7 +59,7 @@ public class TradeController {
         return newTrade;
     }
 
-    @GetMapping("/trades/{t_id}")
+    @GetMapping("/api/trades/{t_id}")
     public Trade getTrade(@PathVariable (value = "t_id") Integer t_id) {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -73,7 +73,7 @@ public class TradeController {
         return trade.findByIdAndAccountId(t_id, userId).get();
     }
 
-    @DeleteMapping("/trades/{id}")
+    @DeleteMapping("/api/trades/{id}")
     public void deleteTrade(@PathVariable Integer id){
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try{
