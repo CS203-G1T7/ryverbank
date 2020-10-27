@@ -33,21 +33,17 @@ Authorization: Basic user_1 01_user_01
 # }
 
 ### ROLE_MANAGER adding a new ROLE_USER
-POST http://localhost:5353/api/trades/1
+POST http://localhost:5353/api/trades
 Content-Type: application/json
 Authorization: Basic user_1 01_user_01
 
 {
-  "buyer": 1,
+  "account_id": 1,
   "symbol": "AAPL",
   "quantity": 1000,
   "action": "buy",
   "bid": 10,
   "ask": 12,
-  "avg_price": 11,
-  "filled_quantity": 200,
-  "date": "2019-02-22",
-  "status": "open"
 }
 
 ### ROLE_MANAGER adding a new ROLE_USER

@@ -20,42 +20,43 @@ public class Trade {
     private @Id @GeneratedValue (strategy = GenerationType.IDENTITY) Integer id;
 
     @NotNull (message = "Buyer account must not be null.")
-    @Column (name = "buyer_account_id")
-    private Integer buyer;
+    private Integer account_id;
 
     @NotNull (message = "Stock symbol must not be null.")
-    @Column (name = "stock_symbol")
+    @Column (name = "trade_symbol")
     private String symbol;
     
     @NotNull (message = "Must specify transaction amount.")
+    @Column (name = "trade_quantity")
     private Integer quantity;
 
     @NotNull (message = "Action must be specified")
+    @Column (name = "action_needed")
     private String action;
 
+    @Column (name = "trade_bid")
     private double bid;
 
+    @Column (name = "trade_ask")
     private double ask;
 
-    @NotNull (message = "Must specify average price amount.")
+    @Column (name = "trade_avg")
     private double avg_price;
 
-    @NotNull (message = "Must specify filled quantity amount.")
     private Integer filled_quantity;
 
-    @NotNull (message = "Must specify date.")
+    @Column (name = "trade_date")
     private Date date;
 
-    @NotNull (message = "Must specify status.")
+    @Column (name = "trade_status")
     private String status;
     
-    @ManyToOne 
-    @JoinColumn (name = "customer_id", nullable = true)
-    private Account account;
+    @NotNull (message = "Must specify customer id.")
+    private Integer customer_id;
 
-    public Trade(Integer buyer, String symbol, Integer quantity, String action, double bid, double ask,
-                    double avg_price, Integer filled_quantity, Date date, String status){
-        this.buyer = buyer;
+    public Trade(Integer account_id, String symbol, Integer quantity, String action, double bid, double ask,
+                    double avg_price, Integer filled_quantity, Date date, String status, Integer customer_id){
+        this.account_id = account_id;
         this.symbol = symbol;
         this.quantity = quantity;
         this.action = action;
@@ -65,6 +66,7 @@ public class Trade {
         this.filled_quantity = filled_quantity;
         this.date = date;
         this.status = status;
+        this.customer_id = customer_id;
     }
 
 }

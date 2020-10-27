@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.Iterator;
 import javax.validation.Valid;
 
+import java.time.Instant;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
@@ -30,18 +32,24 @@ public class TradeController {
     private AccountService accountService;
     private QuoteController quote;
 
-    public TradeController(AssetRepository portfolio, TransactionRepository transactions, AccountRepository accounts, TradeRepository trade){
+    public TradeController(AccountService accountService, QuoteController quote, AssetRepository portfolio, TransactionRepository transactions, AccountRepository accounts, TradeRepository trade){
         this.transactions = transactions;
         this.accounts = accounts;
         this.portfolio = portfolio;
         this.trade = trade;
+        this.accountService = accountService;
+        this.quote = quote;
     }
 
-    @PostMapping("/api/trades/{t_id}")
+    @PostMapping("/api/trades")
     public Trade addTrade(@Valid @RequestBody Trade newTrade) {
-        Integer account_id = newTrade.getBuyer();
+        newTrade.setDate(new Date(Instant.now().getEpochSecond() * 1000));
+        newTrade.setStatus("open");
+        newTrade.setFilled_quantity(0);
 
-        Account buyer = accounts.findById(account_id).get();
+        Integer account_id = newTrade.getAccount_id();
+
+        Account buyer = accountService.getAccount(account_id);
         
         if (buyer == null) throw new AccountNotFoundException(account_id);
 
@@ -51,12 +59,13 @@ public class TradeController {
 
         String action = newTrade.getAction();
 
-        if (!action.equals("buy") || !action.equals("sell")) {
+        if (!action.equals("buy") && !action.equals("sell")) {
             throw new InvalidTradeException("Invalid action parameter");
         }
         
         updateTrade();
         processTrade(newTrade);
+        trade.save(newTrade);
         return newTrade;
     }
 
@@ -68,10 +77,7 @@ public class TradeController {
 
         if(userId == null) throw new TradeForbiddenException();
 
-        if(!accounts.existsById(userId)) {
-            throw new AccountNotFoundException(userId);
-        }
-        return trade.findByIdAndAccountId(t_id, userId).get();
+        return trade.findByIdAndCustomerId(t_id, userId).get();
     }
 
     @DeleteMapping("/api/trades/{id}")
@@ -79,10 +85,11 @@ public class TradeController {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try{
             Trade temp = trade.findById(id).get();
-            if(user.getId() != temp.getAccount().getId()) {
+            if(user.getId() != temp.getCustomer_id()) {
                 throw new TradeForbiddenException(id);
             }
             temp.setStatus("cancelled");
+            trade.save(temp);
          }catch(EmptyResultDataAccessException e) {
             throw new TradeNotFoundException(id);
          }
@@ -103,9 +110,9 @@ public class TradeController {
         double cost;
         boolean marketTrade = false;
         int quantity = newTrade.getQuantity();
-        int account_id = newTrade.getAccount().getId();
+        int account_id = newTrade.getCustomer_id();
         Quote tempQuote = quote.getQuote(newTrade.getSymbol());
-        Integer buyerId = newTrade.getBuyer();
+        Integer buyerId = newTrade.getAccount_id();
         Account buyer = accountService.getAccount(buyerId);
         
         List<Asset> buyerPortfolio = portfolio.findByCustomerId(account_id);
@@ -180,6 +187,7 @@ public class TradeController {
         while (listIter.hasNext()) {
             Trade tempTrade = (Trade) listIter.next();
             processTrade(tempTrade);
+            trade.save(tempTrade);
         }
     }
 
