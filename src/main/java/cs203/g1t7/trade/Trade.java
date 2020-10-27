@@ -46,7 +46,7 @@ public class Trade {
     private Integer filled_quantity;
 
     @Column (name = "trade_date")
-    private Date date;
+    private long date;
 
     @Column (name = "trade_status")
     private String status;
@@ -55,7 +55,7 @@ public class Trade {
     private Integer customer_id;
 
     public Trade(Integer account_id, String symbol, Integer quantity, String action, double bid, double ask,
-                    double avg_price, Integer filled_quantity, Date date, String status, Integer customer_id){
+                    double avg_price, Integer filled_quantity, long date, String status, Integer customer_id){
         this.account_id = account_id;
         this.symbol = symbol;
         this.quantity = quantity;

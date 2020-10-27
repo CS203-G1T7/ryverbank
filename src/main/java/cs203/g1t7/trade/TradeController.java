@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.Iterator;
 import javax.validation.Valid;
 
-import java.time.Instant;
+import java.time.*;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -43,7 +43,7 @@ public class TradeController {
 
     @PostMapping("/api/trades")
     public Trade addTrade(@Valid @RequestBody Trade newTrade) {
-        newTrade.setDate(new Date(Instant.now().getEpochSecond() * 1000));
+        newTrade.setDate(Instant.now().toEpochMilli());
         newTrade.setStatus("open");
         newTrade.setFilled_quantity(0);
 
@@ -96,13 +96,16 @@ public class TradeController {
     }
 
     public void processTrade(Trade newTrade) {
-        DateFormat df = new SimpleDateFormat("HH");
-        Date dateobj = new Date();
-        String sb = df.format(dateobj).toString();
+        Instant nowUtc = Instant.now();
+        ZoneId timeZone = ZoneId.of("Asia/Singapore");
+        ZonedDateTime nowAsiaSingapore = ZonedDateTime.ofInstant(nowUtc, timeZone);
 
-        int hour = Integer.parseInt(sb);
+        int hour = nowAsiaSingapore.getHour();
         if (hour < 9 || hour >= 17) {
-            newTrade.setStatus("expired");
+            ZonedDateTime tradeSubmit = ZonedDateTime.ofInstant(Instant.ofEpochSecond(newTrade.getDate()), timeZone);
+            if (tradeSubmit.getDayOfYear() <= nowAsiaSingapore.getDayOfYear()) {
+                if (tradeSubmit.getHour() < 17) newTrade.setStatus("expired");
+            }
             return;
         }
 
@@ -177,8 +180,6 @@ public class TradeController {
                 newTrade.setStatus("open");
             }
         }
-
-        trade.save(newTrade);
     }
 
     public void updateTrade() {
