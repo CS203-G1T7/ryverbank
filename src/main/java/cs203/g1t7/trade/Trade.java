@@ -1,19 +1,10 @@
 package cs203.g1t7.trade;
+import java.util.Date;
 
-// import java.util.List;
-
-// import javax.persistence.CascadeType;
-// import javax.persistence.Entity;
-// import javax.persistence.GeneratedValue;
-// import javax.persistence.GenerationType;
-// import javax.persistence.Id;
-// import javax.persistence.ManyToOne;
 import javax.persistence.*;
 import javax.validation.constraints.*;
 
 import cs203.g1t7.account.Account;
-
-// import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.*;
 
@@ -34,7 +25,7 @@ public class Trade {
 
     @NotNull (message = "Stock symbol must not be null.")
     @Column (name = "stock_symbol")
-    private Integer symbol;
+    private String symbol;
     
     @NotNull (message = "Must specify transaction amount.")
     private Integer quantity;
@@ -42,10 +33,8 @@ public class Trade {
     @NotNull (message = "Action must be specified")
     private String action;
 
-    @NotNull (message = "Must specify bid amount.")
     private double bid;
 
-    @NotNull (message = "Must specify ask amount.")
     private double ask;
 
     @NotNull (message = "Must specify average price amount.")
@@ -55,16 +44,16 @@ public class Trade {
     private Integer filled_quantity;
 
     @NotNull (message = "Must specify date.")
-    private long date;
+    private Date date;
 
     @NotNull (message = "Must specify status.")
     private String status;
     
     @ManyToOne 
-    @JoinColumn (name = "customer_id", nullable = false)
+    @JoinColumn (name = "customer_id", nullable = true)
     private Account account;
 
-    public Trade(Integer buyer, Integer symbol, Integer quantity, String action, double bid, double ask
+    public Trade(Integer buyer, String symbol, Integer quantity, String action, double bid, double ask,
                     double avg_price, Integer filled_quantity, Date date, String status){
         this.buyer = buyer;
         this.symbol = symbol;

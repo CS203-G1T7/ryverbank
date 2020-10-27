@@ -20,43 +20,54 @@ public class TransactionController {
     private AccountRepository accounts;
     private AccountService accountService;
 
-    public TransactionController(TransactionRepository transactions, AccountRepository accounts){
+    public TransactionController(TransactionRepository transactions, AccountRepository accounts, AccountService accountService){
         this.transactions = transactions;
         this.accounts = accounts;
+        this.accountService = accountService;
     }
 
-    @GetMapping("/accounts/{id}/transactions/{t_id}")
+    @GetMapping("/api/accounts/{id}/transactions/{t_id}")
     public Optional<Transaction> getTransactions(@PathVariable (value = "id") Integer id,
                                                 @PathVariable (value = "t_id") Integer t_id) {
-        User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        if(id != user.getId()) throw new TransactionForbiddenException();
-
         if(!accounts.existsById(id)) {
             throw new AccountNotFoundException(id);
         }
+        User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Account current = accounts.findById(id).get();
+
+        if((current.getCustomer_id() != user.getId()) && user.getAuthority().equals("ROLE_USER")) throw new TransactionForbiddenException();
+
+        if(!transactions.existsById(t_id)) throw new TransactionNotFoundException(t_id);
+
         return transactions.findByIdAndAccountId(t_id, id);
     }
 
-    @GetMapping("/accounts/{id}/transactions")
+    @GetMapping("/api/accounts/{id}/transactions")
     public List<Transaction> getTransactions(@PathVariable Integer id) {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        if(id != user.getId()) throw new TransactionForbiddenException();
-
         if(!accounts.existsById(id)) {
             throw new AccountNotFoundException(id);
         }
+
+        Account current = accounts.findById(id).get();
+
+        if((current.getCustomer_id() != user.getId()) && user.getAuthority().equals("ROLE_USER")) throw new TransactionForbiddenException();
+
         return transactions.findByAccountId(id);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/accounts/{id}/transactions")
+    @PostMapping("/api/accounts/{id}/transactions")
     public Transaction addTransaction(@PathVariable Integer id, @Valid @RequestBody Transaction newTransactionInfo) {
+        User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Account from = accounts.findById(id).get();
+        if(from == null) throw new AccountNotFoundException(id);
+
+        if((from.getCustomer_id() != user.getId()) && user.getAuthority().equals("ROLE_USER")) throw new TransactionForbiddenException();
+        
         Account to = accounts.findById(newTransactionInfo.getTo()).get();
 
-        if(from == null) throw new AccountNotFoundException(id);
         if(to == null) throw new AccountNotFoundException(newTransactionInfo.getFrom());
 
         //proceed

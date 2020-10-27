@@ -22,11 +22,11 @@ public class RyverBankApplication {
         UserRepository users = ctx.getBean(UserRepository.class);
         BCryptPasswordEncoder encoder = ctx.getBean(BCryptPasswordEncoder.class);
         System.out.println("[Add user]: " + users.save(
-            new User("manager_1", encoder.encode("01_manager_01"), "ROLE_MANAGER", "marktan", "S5118309F", "91251234", "27 Jalan Alamak S680234", true)));
+            new User("manager_1", encoder.encode("01_manager_01"), "ROLE_MANAGER", "Raymond Tan", "S5118309F", "91251234", "27 Jalan Hidup S680234", true)));
         System.out.println("[Add user]: " + users.save(
-            new User("analyst_1", encoder.encode("01_analyst_01"), "ROLE_ANALYST", "johntan", "S7251849G", "82345678", "27 Bukit Timah S123456", true)));
+            new User("analyst_1", encoder.encode("01_analyst_01"), "ROLE_ANALYST", "Abang John", "S7251849G", "82345678", "27 Bukit Timah S123456", true)));
         System.out.println("[Add user]: " + users.save(
-            new User("analyst_2", encoder.encode("02_analyst_02"), "ROLE_ANALYST", "alice", "S5558664J", "92345678", "127 Bukit Timah S123456", true)));
+            new User("analyst_2", encoder.encode("02_analyst_02"), "ROLE_ANALYST", "Alice Wong", "S5558664J", "92345678", "127 Bukit Batok", true)));
     }
     
 }

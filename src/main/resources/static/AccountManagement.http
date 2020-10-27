@@ -1,5 +1,21 @@
 ### ROLE_MANAGER adding a new ROLE_USER (to use)
-POST http://localhost:5353/customers
+POST http://localhost:5353/api/customers
+Content-Type: application/json
+Authorization: Basic manager_1 01_manager_01
+
+{
+    "full_name":"Raymond Tan",
+    "nric":"S5118309F",
+    "phone":"91251234",
+    "address":"27 Jalan Hidup S680234",
+    "username":"manager_1",
+    "password":"01_manager_01",
+    "authorities":"ROLE_MANAGER",
+    "active": true
+}
+
+### ROLE_MANAGER adding a new ROLE_USER (to use)
+POST http://localhost:5353/api/customers
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
@@ -15,7 +31,7 @@ Authorization: Basic manager_1 01_manager_01
 }
 
 ### ROLE_MANAGER adding a new ROLE_USER (to use)
-POST http://localhost:5353/customers
+POST http://localhost:5353/api/customers
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
@@ -31,7 +47,7 @@ Authorization: Basic manager_1 01_manager_01
 }
 
 ### ROLE_MANAGER adding a new account for an existing ROLE_USER
-POST http://localhost:5353/accounts
+POST http://localhost:5353/api/accounts
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
@@ -42,7 +58,7 @@ Authorization: Basic manager_1 01_manager_01
 }
 
 ### ROLE_MANAGER adding a new account for an existing ROLE_USER
-POST http://localhost:5353/accounts
+POST http://localhost:5353/api/accounts
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
@@ -53,23 +69,23 @@ Authorization: Basic manager_1 01_manager_01
 }
 
 ### ROLE_MANAGER views all  accounts
-GET http://localhost:5353/accounts
+GET http://localhost:5353/api/accounts
 Authorization: Basic manager_1 01_manager_01
 
 ### ROLE_MANAGER cannot view unexisting account
-GET http://localhost:5353/accounts/3
+GET http://localhost:5353/api/accounts/3
 Authorization: Basic manager_1 01_manager_01
 
 ### ROLE_USER(1) views all of his/her accounts
-GET http://localhost:5353/accounts
+GET http://localhost:5353/api/accounts
 Authorization: Basic user_1 01_user_01
 
 ### ROLE_USER(2) views all of his/her accounts
-GET http://localhost:5353/accounts
+GET http://localhost:5353/api/accounts
 Authorization: Basic user_2 02_user_02
 
 ### ROLE_USER adds a new transaction
-POST http://localhost:5353/accounts/1/transactions
+POST http://localhost:5353/api/accounts/1/transactions
 Content-Type: application/json
 Authorization: Basic user_1 01_user_01
 
@@ -80,9 +96,9 @@ Authorization: Basic user_1 01_user_01
 }
 
 ### ROLE_USER(SENDER) views all of his/her accounts' transactions
-GET http://localhost:5353/accounts/1/transactions
+GET http://localhost:5353/api/accounts/1/transactions
 Authorization: Basic user_1 01_user_01
 
 ### ROLE_USER(RECEIVER) views all of his/her accounts' transactions
-GET http://localhost:5353/accounts/2/transactions
+GET http://localhost:5353/api/accounts/2/transactions
 Authorization: Basic user_2 02_user_02

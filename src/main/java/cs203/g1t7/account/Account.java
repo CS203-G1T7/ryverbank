@@ -2,12 +2,6 @@ package cs203.g1t7.account;
 
 import java.util.List;
 
-// import javax.persistence.CascadeType;
-// import javax.persistence.Entity;
-// import javax.persistence.GeneratedValue;
-// import javax.persistence.GenerationType;
-// import javax.persistence.Id;
-// import javax.persistence.OneToMany;
 import javax.persistence.*;
 
 import javax.validation.constraints.NotNull;
@@ -43,22 +37,9 @@ public class Account {
     @JsonIgnore
     private List<Transaction> transactions;
 
-    // @ManyToOne
-    // List<Transaction> transactions;
-    
-    //@OneToMany
     public Account(Integer customer_id, double balance, double available_balance){
         this.customer_id = customer_id;
         this.balance = balance;
         this.available_balance = available_balance;
-        // this.transactions = transactions;
     }
-
-    // public List<Transaction> getTransactions() {
-    //     return transactions;
-    // }
-
-    // public void addTransaction(Transaction transaction) {
-    //     transactions.add(transaction);
-    // }
 }
