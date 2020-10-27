@@ -33,10 +33,8 @@ public class Trade {
     @NotNull (message = "Action must be specified")
     private String action;
 
-    @NotNull (message = "Must specify bid amount.")
     private double bid;
 
-    @NotNull (message = "Must specify ask amount.")
     private double ask;
 
     @NotNull (message = "Must specify average price amount.")
@@ -52,7 +50,7 @@ public class Trade {
     private String status;
     
     @ManyToOne 
-    // @JoinColumn (name = "customer_id", nullable = false)
+    @JoinColumn (name = "customer_id", nullable = true)
     private Account account;
 
     public Trade(Integer buyer, String symbol, Integer quantity, String action, double bid, double ask,

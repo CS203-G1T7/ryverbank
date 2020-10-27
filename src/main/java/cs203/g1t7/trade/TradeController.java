@@ -37,9 +37,10 @@ public class TradeController {
         this.trade = trade;
     }
 
-    @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/api/trades")
-    public Trade addTrade(@PathVariable Integer account_id, @Valid @RequestBody Trade newTrade) {
+    @PostMapping("/api/trades/{t_id}")
+    public Trade addTrade(@Valid @RequestBody Trade newTrade) {
+        Integer account_id = newTrade.getBuyer();
+
         Account buyer = accounts.findById(account_id).get();
         
         if (buyer == null) throw new AccountNotFoundException(account_id);
