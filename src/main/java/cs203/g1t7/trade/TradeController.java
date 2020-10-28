@@ -31,15 +31,17 @@ public class TradeController {
     private AccountRepository accounts;
     private PortfolioRepository portfolio;
     private AccountService accountService;
-    private QuoteController quote;
+    private QuoteRepository quote;
+    private QuoteController quoteCtrl;
 
-    public TradeController(AccountService accountService, QuoteController quote, PortfolioRepository portfolio, TransactionRepository transactions, AccountRepository accounts, TradeRepository trade){
+    public TradeController(AccountService accountService, QuoteRepository quote, QuoteController quoteCtrl, PortfolioRepository portfolio, TransactionRepository transactions, AccountRepository accounts, TradeRepository trade){
         this.transactions = transactions;
         this.accounts = accounts;
         this.portfolio = portfolio;
         this.trade = trade;
         this.accountService = accountService;
         this.quote = quote;
+        this.quoteCtrl = quoteCtrl;
     }
 
     @PostMapping("/api/trades")
@@ -124,7 +126,9 @@ public class TradeController {
         boolean marketTrade = false;
         int quantity = newTrade.getQuantity();
         int account_id = newTrade.getCustomer_id();
-        Quote tempQuote = quote.getQuote(newTrade.getSymbol());
+        Quote tempQuote;
+        if (quote.findBySymbol(newTrade.getSymbol()) == null) tempQuote = quoteCtrl.getQuote(newTrade.getSymbol());
+        else tempQuote = quote.findBySymbol(newTrade.getSymbol());
         Integer buyerId = newTrade.getAccount_id();
         Account buyer = accountService.getAccount(buyerId);
         
@@ -148,11 +152,11 @@ public class TradeController {
                 if (tempQuote.getBid_volume() >= newTrade.getQuantity()) {
                     newTrade.setStatus("filled");
                     newTrade.setFilled_quantity(newTrade.getQuantity());
-                    tempQuote.setBid_volume(tempQuote.getBid_volume() - newTrade.getQuantity());
+                    updateQuote(tempQuote, "bid", tempQuote.getBid_volume() - newTrade.getQuantity());
                 } else {
                     newTrade.setStatus("partial-filled");
                     newTrade.setFilled_quantity(tempQuote.getBid_volume());
-                    tempQuote.setBid_volume(0);
+                    updateQuote(tempQuote, "bid", 0);                   
                 }
                 boolean assetFound = false;
                 while (portfolioIter.hasNext()) {
@@ -196,11 +200,11 @@ public class TradeController {
                 if (tempQuote.getAsk_volume() >= newTrade.getQuantity()) {
                     newTrade.setStatus("filled");
                     newTrade.setFilled_quantity(newTrade.getQuantity());
-                    tempQuote.setAsk_volume(tempQuote.getAsk_volume() - newTrade.getQuantity());
+                    updateQuote(tempQuote, "ask", tempQuote.getAsk_volume() - newTrade.getQuantity());
                 } else {
                     newTrade.setStatus("partial-filled");
                     newTrade.setFilled_quantity(tempQuote.getAsk_volume());
-                    tempQuote.setAsk_volume(0);
+                    updateQuote(tempQuote, "ask", 0);
                 }
                 while (portfolioIter.hasNext()) {
                     Asset temp = portfolioIter.next();
@@ -218,15 +222,24 @@ public class TradeController {
         }
     }
 
-    public Trade updateTrade() {
+    public void updateTrade() {
         List<Trade> list = trade.findByStatusOrStatus("open", "partial-filled");
         Iterator listIter = list.iterator();
         while (listIter.hasNext()) {
             Trade tempTrade = (Trade) listIter.next();
-            processTrade(tempTrade);
-            trade.save(tempTrade);
+            _updateTrade(tempTrade);
         }
-        return null;
+    }
+
+    public Trade _updateTrade(Trade temp) {
+        processTrade(temp);
+        return trade.save(temp);
+    }
+
+    public Quote updateQuote(Quote temp, String condition, Integer volume) {
+        if (condition.equals("ask")) temp.setAsk_volume(volume);
+        else temp.setBid_volume(volume);
+        return quote.save(temp);
     }
 
     public Transaction updateBalanceSender(Integer id_from, Transaction t) {

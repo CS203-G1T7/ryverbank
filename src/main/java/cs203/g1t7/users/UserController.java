@@ -11,23 +11,18 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import cs203.g1t7.asset.PortfolioRepository;
-import cs203.g1t7.asset.Portfolio;
-
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
 public class UserController {
     private UserRepository users;
-    private PortfolioRepository portfolios;
     private CustomUserDetailsService cuds = new CustomUserDetailsService(users);
     private BCryptPasswordEncoder encoder;
     private UserDetailsManager udm;
 
-    public UserController(UserRepository users, BCryptPasswordEncoder encoder, PortfolioRepository portfolios){
+    public UserController(UserRepository users, BCryptPasswordEncoder encoder){
         this.users = users;
-        this.portfolios = portfolios;
         this.encoder = encoder;
     }
 
