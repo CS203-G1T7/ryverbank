@@ -131,7 +131,10 @@ public class TradeController {
             }
             cost = price * quantity;
             if (cost > buyer.getBalance()) throw new InsufficientFundsException();
-            if (marketTrade) {
+            if (!marketTrade && newTrade.getFilled_quantity() == 0) {
+                newTrade.setStatus("open");
+            }
+            if (marketTrade || (!marketTrade && (newTrade.getBid() >= tempQuote.getBid()))) {
                 if (tempQuote.getBid_volume() >= newTrade.getQuantity()) {
                     newTrade.setStatus("filled");
                     newTrade.setFilled_quantity(newTrade.getQuantity());
@@ -143,8 +146,6 @@ public class TradeController {
                 }
                 Transaction newTransactions = new Transaction(buyerId, -1, cost);
                 updateBalanceSender(buyerId, newTransactions);
-            } else {
-                newTrade.setStatus("open");
             }
         } else {
             price = newTrade.getAsk();
@@ -163,7 +164,10 @@ public class TradeController {
                 }
             }
             if (!portFound) throw new InvalidTradeException("Assets not found on portfolio");
-            if (marketTrade) {
+            if (!marketTrade && newTrade.getFilled_quantity() == 0) {
+                newTrade.setStatus("open");
+            }
+            if (marketTrade || (!marketTrade && (newTrade.getAsk() <= tempQuote.getAsk()))) {
                 if (tempQuote.getAsk_volume() >= newTrade.getQuantity()) {
                     newTrade.setStatus("filled");
                     newTrade.setFilled_quantity(newTrade.getQuantity());
@@ -176,8 +180,6 @@ public class TradeController {
                 newTrade.setStatus("filled");
                 Transaction newTransactions = new Transaction(-1, buyerId, cost);
                 updateBalanceReceiver(buyerId, newTransactions);
-            } else {
-                newTrade.setStatus("open");
             }
         }
     }
