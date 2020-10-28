@@ -25,11 +25,10 @@ import lombok.*;
 @NoArgsConstructor
 @EqualsAndHashCode
 public class Quote {
-    private @Id @GeneratedValue (strategy = GenerationType.IDENTITY) Integer id;
 
     @NotNull (message = "Buyer account must not be null.")
     @Column (name = "symbol")
-    private String symbol;
+    private @Id String symbol;
 
     @NotNull (message = "Buyer account must not be null.")
     @Column (name = "last_price")
@@ -51,12 +50,4 @@ public class Quote {
     @Column (name = "ask")
     private Double ask;
     
-    public Quote(String symbol, Double last_price, int bid_volume, Double bid, int ask_volume, Double ask){
-        this.symbol = symbol;
-        this.last_price = last_price;
-        this.bid_volume = bid_volume;
-        this.bid = bid;
-        this.ask_volume = ask_volume;
-        this.ask = ask;
-    }
 }

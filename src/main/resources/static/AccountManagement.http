@@ -73,7 +73,7 @@ GET http://localhost:5353/api/accounts
 Authorization: Basic manager_1 01_manager_01
 
 ### ROLE_MANAGER cannot view unexisting account
-GET http://localhost:5353/api/accounts/3
+GET http://localhost:5353/api/accounts/1
 Authorization: Basic manager_1 01_manager_01
 
 ### ROLE_USER(1) views all of his/her accounts

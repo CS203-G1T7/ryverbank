@@ -12,7 +12,7 @@ import javax.persistence.*;
 import javax.validation.constraints.*;
 
 import cs203.g1t7.account.Account;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 
@@ -23,28 +23,40 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode
+@IdClass(AssetId.class)
 public class Asset {
-    private @Id @GeneratedValue (strategy = GenerationType.IDENTITY) Integer id;
 
     @NotNull (message = "Buyer account must not be null.")
-    @Column (name = "buyer_account_id")
-    private Integer buyer;
+    @JsonIgnore
+    private @Id Integer customer_id;
 
     @NotNull (message = "Stock symbol must not be null.")
     @Column (name = "stock_symbol")
-    private String symbol;
+    private @Id String code;
     
     @NotNull (message = "Must specify transaction amount.")
-    private double amount;
-    
-    @ManyToOne 
-    @JoinColumn (name = "customer_id", nullable = false)
-    private Account customer;
+    private int quantity;
 
-    public Asset(Integer buyer, String symbol, double amount){
-        this.buyer = buyer;
-        this.symbol = symbol;
-        this.amount = amount;
+    private double avg_price;
+
+    private double current_price;
+
+    private double value;
+
+    private double gain_loss;
+
+    @ManyToOne 
+    @JoinColumn (name = "account_id", nullable = false)
+    @JsonIgnore
+    private Portfolio portfolio;
+    
+    public Asset(Integer customer_id, String code, int quantity, double current_price){
+        this.customer_id = customer_id;
+        this.code = code;
+        this.quantity = quantity;
+        this.current_price = current_price;
+        this.value = current_price * quantity;
+        this.gain_loss = 0;
     }
 
 }

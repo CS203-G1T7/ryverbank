@@ -1,6 +1,7 @@
 package cs203.g1t7.users;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import javax.validation.Valid;
 
@@ -9,18 +10,24 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
+import cs203.g1t7.asset.PortfolioRepository;
+import cs203.g1t7.asset.Portfolio;
+
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
 public class UserController {
     private UserRepository users;
+    private PortfolioRepository portfolios;
     private CustomUserDetailsService cuds = new CustomUserDetailsService(users);
     private BCryptPasswordEncoder encoder;
     private UserDetailsManager udm;
 
-    public UserController(UserRepository users, BCryptPasswordEncoder encoder){
+    public UserController(UserRepository users, BCryptPasswordEncoder encoder, PortfolioRepository portfolios){
         this.users = users;
+        this.portfolios = portfolios;
         this.encoder = encoder;
     }
 
@@ -86,7 +93,10 @@ public class UserController {
                             customer.setAddress(newUserInfo.getAddress());
             return users.save(customer);
             }).orElse(null);
+
         }
-            return users.findById(id).get();
-        }
+        
+        return users.findById(id).get();
+    }
+
 }

@@ -15,19 +15,27 @@ import cs203.g1t7.users.*;
 
 @RestController
 public class AssetController {
-    private AssetRepository portfolio;
+    private PortfolioRepository portfolio;
     private AccountRepository accounts;
     private AccountService accountService;
 
-    public AssetController(AssetRepository portfolio, AccountRepository accounts){
+    public AssetController(PortfolioRepository portfolio, AccountRepository accounts){
         this.portfolio = portfolio;
         this.accounts = accounts;
     }
 
     @GetMapping("/api/portfolio")
-    public List<Asset> getPortfolio() {
+    public Portfolio getPortfolio() {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
+        if (portfolio.findByCustomerId(user.getId()) == null) return makePortfolio(user.getId());
         return portfolio.findByCustomerId(user.getId());
+    }
+    
+    public Portfolio makePortfolio(Integer id) {
+        Portfolio temp = new Portfolio();
+        temp.setCustomer_id(id);
+        temp.setUnrealized_gain_loss(0);
+        temp.setTotal_gain_loss(0);
+        return portfolio.save(temp);
     }
 }

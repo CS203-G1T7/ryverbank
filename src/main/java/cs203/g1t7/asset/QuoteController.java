@@ -16,7 +16,10 @@ import cs203.g1t7.asset.*;
 
 @RestController
 public class QuoteController {
-    public QuoteController() {
+    private QuoteRepository quotes;
+
+    public QuoteController(QuoteRepository quotes) {
+        this.quotes = quotes;
     }
 
     /**
@@ -26,7 +29,7 @@ public class QuoteController {
      * @return content with the given id
      */
     @GetMapping("/api/stocks/{asset_id}")
-    public static Quote getQuote(@PathVariable String asset_id)
+    public Quote getQuote(@PathVariable String asset_id)
     {
         final String uri = String.format("https://finnhub.io/api/v1/stock/price-target?symbol=%s&token=bu3iu1v48v6up0bhtaeg", asset_id);
     
@@ -38,8 +41,15 @@ public class QuoteController {
         String sym = split[7];
         Double price = Double.parseDouble(split[14].substring(1, split[14].length() - 2));
 
-        Quote quote = new Quote(sym, price, 20000, price - 0.01, 20000, price + 0.01);
-
-        return quote;
+        Quote quote;
+        if (quotes.findBySymbol(sym) != null) {
+            quote = quotes.findBySymbol(sym);
+            quote.setLast_price(price);
+            quote.setBid(price - 0.01);
+            quote.setAsk(price + 0.01);
+        } else {
+            quote = new Quote(sym, price, 20000, price - 0.01, 20000, price + 0.01);
+        }
+        return quotes.save(quote);
     }
 }

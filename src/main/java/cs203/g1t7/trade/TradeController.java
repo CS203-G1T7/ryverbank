@@ -29,11 +29,11 @@ public class TradeController {
     private TradeRepository trade;
     private TransactionRepository transactions;
     private AccountRepository accounts;
-    private AssetRepository portfolio;
+    private PortfolioRepository portfolio;
     private AccountService accountService;
     private QuoteController quote;
 
-    public TradeController(AccountService accountService, QuoteController quote, AssetRepository portfolio, TransactionRepository transactions, AccountRepository accounts, TradeRepository trade){
+    public TradeController(AccountService accountService, QuoteController quote, PortfolioRepository portfolio, TransactionRepository transactions, AccountRepository accounts, TradeRepository trade){
         this.transactions = transactions;
         this.accounts = accounts;
         this.portfolio = portfolio;
@@ -128,7 +128,7 @@ public class TradeController {
         Integer buyerId = newTrade.getAccount_id();
         Account buyer = accountService.getAccount(buyerId);
         
-        List<Asset> buyerPortfolio = portfolio.findByCustomerId(account_id);
+        List<Asset> buyerPortfolio = portfolio.findByCustomerId(account_id).getAssets();
         Iterator<Asset> portfolioIter = buyerPortfolio.iterator();
 
         String action = newTrade.getAction();
@@ -154,6 +154,21 @@ public class TradeController {
                     newTrade.setFilled_quantity(tempQuote.getBid_volume());
                     tempQuote.setBid_volume(0);
                 }
+                boolean assetFound = false;
+                while (portfolioIter.hasNext()) {
+                    Asset temp = portfolioIter.next();
+                    if (temp.getCode() == newTrade.getSymbol()) {
+                        double temp_value = temp.getQuantity() * price;
+                        temp.setGain_loss(temp.getValue() - temp_value);
+                        temp.setQuantity(temp.getQuantity() + newTrade.getFilled_quantity());
+                        temp.setCurrent_price(price);
+                        temp.setValue(temp.getQuantity() * price);
+                        assetFound = true;
+                    } 
+                }
+                if (!assetFound) {
+                    buyerPortfolio.add(new Asset(account_id, newTrade.getSymbol(), newTrade.getFilled_quantity(), price));
+                }
                 Transaction newTransactions = new Transaction(buyerId, -1, cost);
                 updateBalanceSender(buyerId, newTransactions);
             }
@@ -167,8 +182,8 @@ public class TradeController {
             boolean portFound = false;
             while (portfolioIter.hasNext()) {
                 Asset temp = portfolioIter.next();
-                if (temp.getSymbol() == newTrade.getSymbol()) {
-                    if (temp.getAmount() > newTrade.getQuantity()) throw new InvalidTradeException("Amount of assets not enough");
+                if (temp.getCode() == newTrade.getSymbol()) {
+                    if (temp.getQuantity() > newTrade.getQuantity()) throw new InvalidTradeException("Amount of assets not enough");
                     portFound = true;
                     break;
                 }
@@ -187,14 +202,23 @@ public class TradeController {
                     newTrade.setFilled_quantity(tempQuote.getAsk_volume());
                     tempQuote.setAsk_volume(0);
                 }
-                newTrade.setStatus("filled");
+                while (portfolioIter.hasNext()) {
+                    Asset temp = portfolioIter.next();
+                    if (temp.getCode() == newTrade.getSymbol()) {
+                        double temp_value = temp.getQuantity() * price;
+                        temp.setGain_loss(temp.getValue() - temp_value);
+                        temp.setQuantity(temp.getQuantity() - newTrade.getFilled_quantity());
+                        temp.setCurrent_price(price);
+                        temp.setValue(temp.getQuantity() * price);
+                    } 
+                }
                 Transaction newTransactions = new Transaction(-1, buyerId, cost);
                 updateBalanceReceiver(buyerId, newTransactions);
             }
         }
     }
 
-    public void updateTrade() {
+    public Trade updateTrade() {
         List<Trade> list = trade.findByStatusOrStatus("open", "partial-filled");
         Iterator listIter = list.iterator();
         while (listIter.hasNext()) {
@@ -202,6 +226,7 @@ public class TradeController {
             processTrade(tempTrade);
             trade.save(tempTrade);
         }
+        return null;
     }
 
     public Transaction updateBalanceSender(Integer id_from, Transaction t) {
