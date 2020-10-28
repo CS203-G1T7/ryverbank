@@ -2,6 +2,7 @@ package cs203.g1t7.trade;
 
 import java.util.Date;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Iterator;
 import javax.validation.Valid;
@@ -77,7 +78,16 @@ public class TradeController {
 
         if(userId == null) throw new TradeForbiddenException();
 
-        return trade.findByIdAndCustomerId(t_id, userId).get();
+        Optional<Trade> temp = trade.findByIdAndCustomerId(t_id, userId);
+        Trade tempTrade;
+
+        try {
+            tempTrade = temp.get();
+        } catch (NoSuchElementException e) {
+            throw new TradeNotFoundException(t_id);
+        }
+
+        return tempTrade;
     }
 
     @DeleteMapping("/api/trades/{id}")
@@ -90,7 +100,7 @@ public class TradeController {
             }
             temp.setStatus("cancelled");
             trade.save(temp);
-         }catch(EmptyResultDataAccessException e) {
+         }catch(NoSuchElementException e) {
             throw new TradeNotFoundException(id);
          }
     }
