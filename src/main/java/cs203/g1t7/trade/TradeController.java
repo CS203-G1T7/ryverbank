@@ -150,6 +150,7 @@ public class TradeController {
             if (price == 0) {
                 price = tempQuote.getBid();
                 marketTrade = true;
+                newTrade.setBid(price);
             }
             cost = price * quantity;
             double tempCost = 0;
@@ -208,6 +209,7 @@ public class TradeController {
             if (price == 0) {
                 price = tempQuote.getAsk();
                 marketTrade = true;
+                newTrade.setAsk(price);
             }
             cost = price * quantity;
             boolean portFound = false;
