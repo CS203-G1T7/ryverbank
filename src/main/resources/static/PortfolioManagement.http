@@ -41,7 +41,7 @@ Authorization: Basic user_1 01_user_01
   "account_id": 1,
   "customer_id": 4,
   "symbol": "A17U",
-  "quantity": 100,
+  "quantity": 2147483647,
   "action": "buy",
   "bid": 10,
   "ask": 2.9

@@ -48,6 +48,7 @@ public class TradeController {
         this.assetCtrl = assetCtrl;
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/api/trades")
     public Trade addTrade(@Valid @RequestBody Trade newTrade) {
         newTrade.setDate(Instant.now().toEpochMilli());
@@ -128,7 +129,7 @@ public class TradeController {
         double price;
         double cost;
         boolean marketTrade = false;
-        int quantity = newTrade.getQuantity();
+        int quantity = newTrade.getQuantity() - newTrade.getFilled_quantity();
         int account_id = newTrade.getCustomer_id();
         Quote tempQuote;
         if (quote.findBySymbol(newTrade.getSymbol()) == null) tempQuote = quoteCtrl.getQuote(newTrade.getSymbol());
@@ -151,18 +152,25 @@ public class TradeController {
                 marketTrade = true;
             }
             cost = price * quantity;
-            if (cost > buyer.getBalance()) throw new InsufficientFundsException();
+            double tempCost = 0;
             if (!marketTrade && newTrade.getFilled_quantity() == 0) {
                 newTrade.setStatus("open");
             }
             if (marketTrade || (!marketTrade && (newTrade.getBid() >= tempQuote.getBid()))) {
-                if (tempQuote.getBid_volume() >= newTrade.getQuantity()) {
+                if (tempQuote.getBid_volume() >= quantity && cost < buyer.getBalance()) {
                     newTrade.setStatus("filled");
-                    newTrade.setFilled_quantity(newTrade.getQuantity()); 
+                    newTrade.setFilled_quantity(newTrade.getFilled_quantity() + quantity); 
                     updateQuote(tempQuote, "bid", tempQuote.getBid_volume() - newTrade.getQuantity());
+                    tempCost = cost;
                 } else {
                     newTrade.setStatus("partial-filled");
-                    newTrade.setFilled_quantity(tempQuote.getBid_volume());
+                    if (cost < buyer.getBalance()) {
+                        newTrade.setFilled_quantity(tempQuote.getBid_volume());
+                        tempCost = price * tempQuote.getBid_volume();
+                    } else {
+                        newTrade.setFilled_quantity(newTrade.getFilled_quantity() + (int)(buyer.getBalance() / newTrade.getBid()));
+                        tempCost = price * (int)(buyer.getBalance() / newTrade.getBid());
+                    }
                     updateQuote(tempQuote, "bid", 0);                   
                 }
                 boolean assetFound = false;
@@ -173,8 +181,11 @@ public class TradeController {
                             double temp_value = temp.getQuantity() * price;
                             temp.setGain_loss(temp.getValue() - temp_value);
                             temp.setQuantity(temp.getQuantity() + newTrade.getFilled_quantity());
+                            temp.setAvg_price((temp.getCurrent_price() * temp.getCounter() + price) / (temp.getCounter() + 1));
+                            temp.setCounter(temp.getCounter() + 1);
                             temp.setCurrent_price(price);
                             temp.setValue(temp.getQuantity() * price);
+                            newTrade.setAvg_price(temp.getAvg_price());
                             assetFound = true;
                         } 
                     }
@@ -187,8 +198,9 @@ public class TradeController {
                         tempList.add(tempAsset);
                         buyerPortfolio = Optional.of(tempList);
                     }
+                    newTrade.setAvg_price(price);
                 }
-                Transaction newTransactions = new Transaction(buyerId, -1, cost);
+                Transaction newTransactions = new Transaction(buyerId, -1, tempCost);
                 updateBalanceSender(buyerId, newTransactions);
             }
         } else {
@@ -229,8 +241,11 @@ public class TradeController {
                         double temp_value = temp.getQuantity() * price;
                         temp.setGain_loss(temp.getValue() - temp_value);
                         temp.setQuantity(temp.getQuantity() - newTrade.getFilled_quantity());
+                        temp.setAvg_price((temp.getCurrent_price() * temp.getCounter() + price) / (temp.getCounter() + 1));
+                        temp.setCounter(temp.getCounter() + 1);
                         temp.setCurrent_price(price);
                         temp.setValue(temp.getQuantity() * price);
+                        newTrade.setAvg_price(temp.getAvg_price());
                     } 
                 }
                 Transaction newTransactions = new Transaction(-1, buyerId, cost);

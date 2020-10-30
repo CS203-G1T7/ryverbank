@@ -39,6 +39,9 @@ public class Asset {
 
     private double avg_price;
 
+    @JsonIgnore
+    private int counter = 0;
+
     private double current_price;
 
     private double value;
@@ -55,7 +58,9 @@ public class Asset {
         this.code = code;
         this.quantity = quantity;
         this.current_price = current_price;
+        this.avg_price = current_price;
         this.value = current_price * quantity;
+        this.counter = 1;
         this.gain_loss = 0;
         this.portfolio = portfolio;
     }
