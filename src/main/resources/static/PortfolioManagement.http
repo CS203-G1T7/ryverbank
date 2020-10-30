@@ -42,7 +42,7 @@ Authorization: Basic user_1 01_user_01
   "customer_id": 4,
   "symbol": "A17U",
   "quantity": 100,
-  "action": "sell",
+  "action": "buy",
   "bid": 10,
   "ask": 2.9
 }

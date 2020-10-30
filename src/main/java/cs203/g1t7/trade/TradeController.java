@@ -35,6 +35,7 @@ public class TradeController {
     private QuoteRepository quote;
     private QuoteController quoteCtrl;
     private AssetController assetCtrl;
+    private AssetRepository assets;
 
     public TradeController(AssetController assetCtrl, AccountService accountService, QuoteRepository quote, QuoteController quoteCtrl, PortfolioRepository portfolio, TransactionRepository transactions, AccountRepository accounts, TradeRepository trade){
         this.transactions = transactions;
@@ -221,6 +222,7 @@ public class TradeController {
                     newTrade.setFilled_quantity(tempQuote.getAsk_volume());
                     updateQuote(tempQuote, "ask", 0);
                 }
+                portfolioIter = buyerPortfolio.get().iterator();
                 while (portfolioIter.hasNext()) {
                     Asset temp = portfolioIter.next();
                     if (temp.getCode().equals(newTrade.getSymbol())) {
