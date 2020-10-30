@@ -43,7 +43,7 @@ public class Trade {
     @Column (name = "trade_avg")
     private double avg_price;
 
-    private Integer filled_quantity;
+    private Integer filled_quantity = 0;
 
     @Column (name = "trade_date")
     private long date;

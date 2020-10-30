@@ -169,8 +169,8 @@ public class TradeController {
                         newTrade.setFilled_quantity(tempQuote.getBid_volume());
                         tempCost = price * tempQuote.getBid_volume();
                     } else {
-                        newTrade.setFilled_quantity(newTrade.getFilled_quantity() + (int)(buyer.getBalance() / newTrade.getBid()));
-                        tempCost = price * (int)(buyer.getBalance() / newTrade.getBid());
+                        newTrade.setFilled_quantity(newTrade.getFilled_quantity() + ((int)((int)(buyer.getBalance() / newTrade.getBid()/100)) * 100));
+                        tempCost = price * ((int)((int)(buyer.getBalance() / newTrade.getBid()/100)) * 100);
                     }
                     updateQuote(tempQuote, "bid", 0);                   
                 }
