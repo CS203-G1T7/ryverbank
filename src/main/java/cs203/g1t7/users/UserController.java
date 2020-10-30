@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import cs203.g1t7.asset.AssetController;
+
 @RestController
 public class UserController {
     private UserRepository users;

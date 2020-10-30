@@ -40,15 +40,15 @@ Authorization: Basic user_1 01_user_01
 {
   "account_id": 1,
   "customer_id": 4,
-  "symbol": "AAPL",
+  "symbol": "A17U",
   "quantity": 100,
-  "action": "buy",
+  "action": "sell",
   "bid": 10,
-  "ask": 10
+  "ask": 2.9
 }
 
 ### ROLE_MANAGER adding a new ROLE_USER
-GET http://localhost:5353/api/trades/1
+GET http://localhost:5353/api/trades/2
 Content-Type: application/json
 Authorization: Basic user_1 01_user_01
 

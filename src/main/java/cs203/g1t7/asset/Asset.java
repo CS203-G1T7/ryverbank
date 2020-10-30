@@ -50,13 +50,14 @@ public class Asset {
     @JsonIgnore
     private Portfolio portfolio;
     
-    public Asset(Integer customer_id, String code, int quantity, double current_price){
+    public Asset(Integer customer_id, String code, int quantity, double current_price, Portfolio portfolio){
         this.customer_id = customer_id;
         this.code = code;
         this.quantity = quantity;
         this.current_price = current_price;
         this.value = current_price * quantity;
         this.gain_loss = 0;
+        this.portfolio = portfolio;
     }
 
 }

@@ -64,8 +64,8 @@ public class QuoteController {
                 Double price = stock.getDouble("regularMarketPrice");
                 Double ask = stock.getDouble("ask");
                 Double bid = stock.getDouble("bid");
-                String askVol = stock.getString("askSize");
-                String bidVol = stock.getString("bidSize");
+                String askVol = stock.getString("regularMarketVolume");
+                String bidVol = stock.getString("regularMarketVolume");
                 
                 Integer askVolume = Integer.parseInt(askVol);
                 Integer bidVolume = Integer.parseInt(bidVol);
