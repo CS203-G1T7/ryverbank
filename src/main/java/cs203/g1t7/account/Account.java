@@ -36,6 +36,12 @@ public class Account {
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Transaction> transactions;
+    
+    public Account(Integer customer_id, double balance){
+        this.customer_id = customer_id;
+        this.balance = balance;
+        this.available_balance = balance;
+    }
 
     public Account(Integer customer_id, double balance, double available_balance){
         this.customer_id = customer_id;
