@@ -30,7 +30,7 @@ class ContentIntegrationTest {
 	@LocalServerPort
 	private int port;
 
-	private final String baseUrl = "http://localhost:";
+	private final String baseUrl = "https://localhost:";
 
 	@Autowired
 	/**
