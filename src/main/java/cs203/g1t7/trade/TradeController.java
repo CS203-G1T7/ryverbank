@@ -121,7 +121,7 @@ public class TradeController {
         ZonedDateTime nowAsiaSingapore = ZonedDateTime.ofInstant(nowUtc, timeZone);
 
         int hour = nowAsiaSingapore.getHour();
-        if (hour < 9 || hour >= 18) {
+        if (hour < 9 || hour >= 17) {
             ZonedDateTime tradeSubmit = ZonedDateTime.ofInstant(Instant.ofEpochMilli(newTrade.getDate()), timeZone);
             if (tradeSubmit.getDayOfYear() <= nowAsiaSingapore.getDayOfYear() && tradeSubmit.getYear() <= nowAsiaSingapore.getYear()) {
                 if (tradeSubmit.getHour() < 17) newTrade.setStatus("expired");
