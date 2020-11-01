@@ -1,6 +1,7 @@
 package cs203.g1t7.users;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import javax.validation.Valid;
 
@@ -9,8 +10,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.core.context.SecurityContextHolder;
+
+import cs203.g1t7.asset.AssetController;
 
 @RestController
 public class UserController {
@@ -86,7 +90,10 @@ public class UserController {
                             customer.setAddress(newUserInfo.getAddress());
             return users.save(customer);
             }).orElse(null);
+
         }
-            return users.findById(id).get();
-        }
+        
+        return users.findById(id).get();
+    }
+
 }

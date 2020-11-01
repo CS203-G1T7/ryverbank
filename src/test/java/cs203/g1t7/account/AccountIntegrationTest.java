@@ -34,7 +34,7 @@ class AccountIntegrationTest {
 	@LocalServerPort
 	private int port;
 
-	private final String baseUrl = "http://localhost:";
+	private final String baseUrl = "https://localhost:";
 
 	@Autowired
 	/**
@@ -150,5 +150,4 @@ class AccountIntegrationTest {
 			
 		assertEquals(403, result.getStatusCode().value());
 	}
-
 }
