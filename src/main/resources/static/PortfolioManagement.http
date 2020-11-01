@@ -1,0 +1,59 @@
+### ROLE_MANAGER adding a new ROLE_USER
+GET http://localhost:5353/api/stocks/A17U
+Content-Type: application/json
+
+### ROLE_MANAGER adding a new ROLE_USER
+GET http://localhost:5353/api/portfolio
+Content-Type: application/json
+Authorization: Basic user_1 01_user_01
+
+# EXPECTED
+# {
+#         "customer_id": 123456,
+#         "assests": [
+#         {
+#             "code":"A17U",
+#             "quantity":1000,
+#             "avg_price": 3.30,
+#             "current_price":3.31,
+#             "value":3310.0,
+#             "gain_loss":10.0
+#         },
+#         {
+#             "code":"Z74",
+#             "avg_price": 2.30,
+#             "quantity":2000,
+#             "current_price":2.27,
+#             "value":4540.0,
+#             "gain_loss":-60.0
+#         }
+#     ],
+#     "unrealized_gain_loss":-50.0 (for stocks currently owned),
+#     "total_gain_loss":500.0 (for all the trades made so far)
+# }
+
+### ROLE_MANAGER adding a new ROLE_USER
+POST http://localhost:5353/api/trades
+Content-Type: application/json
+Authorization: Basic user_1 01_user_01
+
+{
+  "account_id": 1,
+  "customer_id": 4,
+  "symbol": "A17U",
+  "quantity": 2147483647,
+  "action": "buy",
+  "bid": 10,
+  "ask": 2.9
+}
+
+### ROLE_MANAGER adding a new ROLE_USER
+GET http://localhost:5353/api/trades/2
+Content-Type: application/json
+Authorization: Basic user_1 01_user_01
+
+### ROLE_MANAGER adding a new ROLE_USER
+DELETE http://localhost:5353/api/trades/1
+Content-Type: application/json
+Authorization: Basic user_1 01_user_01
+
