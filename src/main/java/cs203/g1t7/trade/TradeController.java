@@ -105,7 +105,8 @@ public class TradeController {
             if(user.getId() != temp.getCustomer_id()) {
                 throw new TradeForbiddenException(id);
             }
-            temp.setStatus("cancelled");
+            if (temp.getStatus().equals("open")) temp.setStatus("cancelled");
+            else throw new InvalidTradeException("Cannot cancel filled trade with id: " + id);
             trade.save(temp);
          }catch(NoSuchElementException e) {
             throw new TradeNotFoundException(id);
@@ -155,9 +156,6 @@ public class TradeController {
             }
             cost = price * quantity;
             double tempCost = 0;
-            if (!marketTrade && newTrade.getFilled_quantity() == 0) {
-                newTrade.setStatus("open");
-            }
             if (marketTrade || (!marketTrade && (newTrade.getBid() >= tempQuote.getBid()))) {
                 if (((!marketTrade && tempQuote.getBid_volume() >= quantity) || (marketTrade && tempQuote.getAsk_volume() >= quantity)) && cost < buyer.getBalance()) {
                     newTrade.setStatus("filled");
@@ -185,7 +183,8 @@ public class TradeController {
                         }
                     }
                     if (!marketTrade) updateQuote(tempQuote, "bid", 0); 
-                    else updateQuote(tempQuote, "ask", 0);                  
+                    else updateQuote(tempQuote, "ask", 0); 
+                    if (newTrade.getFilled_quantity() == 0) newTrade.setStatus("open");           
                 }
                 boolean assetFound = false;
                 if (buyerPortfolio.isPresent()) {
