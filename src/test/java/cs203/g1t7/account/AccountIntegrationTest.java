@@ -150,5 +150,4 @@ class AccountIntegrationTest {
 			
 		assertEquals(403, result.getStatusCode().value());
 	}
-
 }
