@@ -97,6 +97,7 @@ public class AccountController {
         User user = users.findById(user_id).get();
 
         newAccountInfo.setTransactions(new ArrayList<Transaction>());
+        newAccountInfo.setAvailable_balance(newAccountInfo.getBalance());
 
         return accountService.addAccount(newAccountInfo);
     }

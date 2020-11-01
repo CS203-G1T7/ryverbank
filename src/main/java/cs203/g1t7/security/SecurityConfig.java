@@ -58,16 +58,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(HttpMethod.POST, "/api/accounts").hasRole("MANAGER")
             .antMatchers(HttpMethod.POST, "/api/accounts/**").hasRole("USER")
 
-            .antMatchers(HttpMethod.GET, "/api/accounts/**").hasAnyRole("MANAGER", "USER")
-            .antMatchers(HttpMethod.POST, "/api/accounts").hasAnyRole("MANAGER")
-            .antMatchers(HttpMethod.POST, "/apiaccounts/*").hasAnyRole("USER")
-            // .antMatchers(HttpMethod.PUT, "/api/accounts/**").hasAnyRole("MANAGER", "USER")
+            .antMatchers(HttpMethod.GET, "/api/portfolio").hasRole("USER")
 
-            .antMatchers(HttpMethod.GET, "/api/portfolio").hasAnyRole("USER")
+            .antMatchers(HttpMethod.POST, "/api/trades").hasRole("USER")
+            .antMatchers(HttpMethod.GET, "/api/trades/*").hasRole("USER")
+            .antMatchers(HttpMethod.DELETE, "/api/trades/*").hasRole("USER")
 
-            .antMatchers(HttpMethod.POST, "/api/trades").hasAnyRole("USER")
-            .antMatchers(HttpMethod.GET, "/api/trades/*").hasAnyRole("USER")
-            .antMatchers(HttpMethod.DELETE, "/api/trades/*").hasAnyRole("USER")
+            .antMatchers(HttpMethod.POST, "/api/reset").hasRole("MANAGER")
 
             .and()
         .csrf().disable() // CSRF protection is needed only for browser based attacks

@@ -7,11 +7,6 @@ GET http://localhost:5353/api/portfolio
 Content-Type: application/json
 Authorization: Basic user_1 01_user_01
 
-### ROLE_MANAGER adding a new ROLE_USER
-GET http://localhost:5353/api/portfolio
-Content-Type: application/json
-Authorization: Basic user_2 02_user_02
-
 # EXPECTED
 # {
 #         "customer_id": 123456,
@@ -46,6 +41,7 @@ Authorization: Basic user_1 01_user_01
   "account_id": 1,
   "customer_id": 4,
   "symbol": "A17U",
+<<<<<<< HEAD
   "quantity": 100,
   "action": "buy",
   "bid": 0,
@@ -120,6 +116,21 @@ Authorization: Basic user_2 02_user_02
 
 ### ROLE_MANAGER adding a new ROLE_USER
 DELETE http://localhost:5353/api/trades/2
+=======
+  "quantity": 2147483647,
+  "action": "buy",
+  "bid": 10,
+  "ask": 2.9
+}
+
+### ROLE_MANAGER adding a new ROLE_USER
+GET http://localhost:5353/api/trades/2
+Content-Type: application/json
+Authorization: Basic user_1 01_user_01
+
+### ROLE_MANAGER adding a new ROLE_USER
+DELETE http://localhost:5353/api/trades/1
+>>>>>>> bd78972fffa8a12f24e1edb68582c4d48a5b9a4f
 Content-Type: application/json
 Authorization: Basic user_1 01_user_01
 

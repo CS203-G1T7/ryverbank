@@ -74,6 +74,7 @@ public class TransactionController {
         double amount = newTransactionInfo.getAmount();
 
         if(from.getBalance() < newTransactionInfo.getAmount()) throw new InsufficientFundsException();
+        if(from.getAvailable_balance() < newTransactionInfo.getAmount()) throw new InsufficientFundsException();
 
         //sufficient balance, proceed w/ the transaction
         Transaction newTransactionInfo2 = new Transaction(from.getId(), to.getId(), amount);
@@ -107,5 +108,4 @@ public class TransactionController {
             return transactions.save(t);
         }).orElseThrow(() -> new AccountNotFoundException(id_to));
     }
-
 }

@@ -53,4 +53,10 @@ public class ContentServiceTest {
         assertNull(updatedContent);
         verify(contents).findById(contentId);
     }
+
+    @Test
+    void listContent_ReturnAllContent(){
+        List<Content> listContent = contentService.listContents();
+        verify(contents).findAll();
+    }
 }
