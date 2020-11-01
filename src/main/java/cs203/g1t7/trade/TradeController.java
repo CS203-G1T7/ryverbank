@@ -124,7 +124,10 @@ public class TradeController {
         if (hour < 9 || hour >= 17) {
             ZonedDateTime tradeSubmit = ZonedDateTime.ofInstant(Instant.ofEpochMilli(newTrade.getDate()), timeZone);
             if (tradeSubmit.getDayOfYear() <= nowAsiaSingapore.getDayOfYear() && tradeSubmit.getYear() <= nowAsiaSingapore.getYear()) {
-                if (tradeSubmit.getHour() < 17) newTrade.setStatus("expired");
+                if (tradeSubmit.getHour() < 17) {
+                    if (tradeSubmit.getHour() <= 9 && tradeSubmit.getDayOfYear() == nowAsiaSingapore.getDayOfYear()) return;
+                    newTrade.setStatus("expired");
+                }
             }
             return;
         }
