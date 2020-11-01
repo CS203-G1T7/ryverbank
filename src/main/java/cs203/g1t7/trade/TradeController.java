@@ -74,7 +74,7 @@ public class TradeController {
         }
         
         updateTrade();
-        processTrade(newTrade);
+        processTrade(newTrade, false);
         trade.save(newTrade);
         return newTrade;
     }
@@ -115,7 +115,7 @@ public class TradeController {
          }
     }
 
-    public void processTrade(Trade newTrade) {
+    public void processTrade(Trade newTrade, boolean update) {
         Instant nowUtc = Instant.now();
         ZoneId timeZone = ZoneId.of("Asia/Singapore");
         ZonedDateTime nowAsiaSingapore = ZonedDateTime.ofInstant(nowUtc, timeZone);
@@ -227,45 +227,46 @@ public class TradeController {
                 if (newTrade.getFilled_quantity() == newTrade.getQuantity()) newTrade.setStatus("filled");
                 updateQuote(tempQuote, "bid", tempQuote.getBid_volume() + (newTrade.getQuantity() - newTrade.getFilled_quantity()));
             }
- 
-            boolean assetFound = false;
-            if (buyerPortfolio.isPresent()) {
-                while (portfolioIter.hasNext()) {
-                    Asset temp = portfolioIter.next();
-                    if (temp.getCode().equals(newTrade.getSymbol())) {
-                        double temp_value = temp.getQuantity() * price;
-                        if (temp.getQuantity() > 0) temp.setGain_loss(temp.getValue() - temp_value);
-                        temp.setQuantity(temp.getQuantity() + newTrade.getFilled_quantity());
-                        temp.setAvg_price((temp.getCurrent_price() * temp.getCounter() + price) / (temp.getCounter() + 1));
-                        temp.setCounter(temp.getCounter() + 1);
-                        temp.setCurrent_price(price);
-                        temp.setValue(temp.getQuantity() * price);
-                        newTrade.setAvg_price(temp.getAvg_price());
-                        assetFound = true;
-                    } 
+            if (!update) {
+                boolean assetFound = false;
+                if (buyerPortfolio.isPresent()) {
+                    while (portfolioIter.hasNext()) {
+                        Asset temp = portfolioIter.next();
+                        if (temp.getCode().equals(newTrade.getSymbol())) {
+                            double temp_value = temp.getQuantity() * price;
+                            if (temp.getQuantity() > 0) temp.setGain_loss(temp.getValue() - temp_value);
+                            temp.setQuantity(temp.getQuantity() + newTrade.getFilled_quantity());
+                            temp.setAvg_price((temp.getCurrent_price() * temp.getCounter() + price) / (temp.getCounter() + 1));
+                            temp.setCounter(temp.getCounter() + 1);
+                            temp.setCurrent_price(price);
+                            temp.setValue(temp.getQuantity() * price);
+                            newTrade.setAvg_price(temp.getAvg_price());
+                            assetFound = true;
+                        } 
+                    }
+                    portfolioIter = buyerPortfolio.get().iterator();
+                    double tempGainLoss = 0;
+                    while (portfolioIter.hasNext()) {
+                        Asset temp = portfolioIter.next();
+                        if (temp.getQuantity() > 0) tempGainLoss = tempGainLoss + temp.getGain_loss();
+                        else temp.setGain_loss(0);
+                    }
+                    userPortfolio.setUnrealized_gain_loss(tempGainLoss);
                 }
-                portfolioIter = buyerPortfolio.get().iterator();
-                double tempGainLoss = 0;
-                while (portfolioIter.hasNext()) {
-                    Asset temp = portfolioIter.next();
-                    if (temp.getQuantity() > 0) tempGainLoss = tempGainLoss + temp.getGain_loss();
-                    else temp.setGain_loss(0);
+                if (!assetFound) {
+                    if (buyerPortfolio.isPresent()) buyerPortfolio.get().add(new Asset(account_id, newTrade.getSymbol(), newTrade.getFilled_quantity(), price, userPortfolio));
+                    else {
+                        List<Asset> tempList = new ArrayList<>();
+                        Asset tempAsset = new Asset(account_id, newTrade.getSymbol(), newTrade.getFilled_quantity(), price, userPortfolio);
+                        tempList.add(tempAsset);
+                        buyerPortfolio = Optional.of(tempList);
+                    }
+                    newTrade.setAvg_price(price);
                 }
-                userPortfolio.setUnrealized_gain_loss(tempGainLoss);
-            }
-            if (!assetFound) {
-                if (buyerPortfolio.isPresent()) buyerPortfolio.get().add(new Asset(account_id, newTrade.getSymbol(), newTrade.getFilled_quantity(), price, userPortfolio));
-                else {
-                    List<Asset> tempList = new ArrayList<>();
-                    Asset tempAsset = new Asset(account_id, newTrade.getSymbol(), newTrade.getFilled_quantity(), price, userPortfolio);
-                    tempList.add(tempAsset);
-                    buyerPortfolio = Optional.of(tempList);
+                if (!newTrade.getStatus().equals("open")) {
+                    Transaction newTransactions = new Transaction(buyerId, -1, tempCost);
+                    updateBalanceSender(buyerId, newTransactions);
                 }
-                newTrade.setAvg_price(price);
-            }
-            if (!newTrade.getStatus().equals("open")) {
-                Transaction newTransactions = new Transaction(buyerId, -1, tempCost);
-                updateBalanceSender(buyerId, newTransactions);
             }
         } else {
             price = newTrade.getAsk();
@@ -357,33 +358,34 @@ public class TradeController {
                 if (newTrade.getFilled_quantity() == newTrade.getQuantity()) newTrade.setStatus("filled");
                 updateQuote(tempQuote, "ask", tempQuote.getAsk_volume() + (newTrade.getQuantity() - newTrade.getFilled_quantity()));
             }
-
-            portfolioIter = buyerPortfolio.get().iterator();
-            while (portfolioIter.hasNext()) {
-                Asset temp = portfolioIter.next();
-                if (temp.getCode().equals(newTrade.getSymbol())) {
-                    double temp_value = temp.getQuantity() * price;
-                    if (!newTrade.getStatus().equals("open")) userPortfolio.setTotal_gain_loss(userPortfolio.getTotal_gain_loss() + (newTrade.getFilled_quantity() / temp.getQuantity() * temp.getGain_loss())); 
-                    if (temp.getQuantity() > 0) temp.setGain_loss(temp_value - temp.getValue());
-                    temp.setQuantity(temp.getQuantity() - newTrade.getFilled_quantity());
-                    temp.setAvg_price((temp.getCurrent_price() * temp.getCounter() + price) / (temp.getCounter() + 1));
-                    temp.setCounter(temp.getCounter() + 1);
-                    temp.setCurrent_price(price);
-                    temp.setValue(temp.getQuantity() * price);
-                    newTrade.setAvg_price(temp.getAvg_price());
-                } 
-            }
-            portfolioIter = buyerPortfolio.get().iterator();
-            double tempGainLoss = 0;
-            while (portfolioIter.hasNext()) {
-                Asset temp = portfolioIter.next();
-                if (temp.getQuantity() > 0) tempGainLoss = tempGainLoss + temp.getGain_loss();
-                else temp.setGain_loss(0);
-            }
-            userPortfolio.setUnrealized_gain_loss(tempGainLoss);
-            if (!newTrade.getStatus().equals("open")) {
-                Transaction newTransactions = new Transaction(-1, buyerId, cost);
-                updateBalanceReceiver(buyerId, newTransactions);
+            if (!update) {
+                portfolioIter = buyerPortfolio.get().iterator();
+                while (portfolioIter.hasNext()) {
+                    Asset temp = portfolioIter.next();
+                    if (temp.getCode().equals(newTrade.getSymbol())) {
+                        double temp_value = temp.getQuantity() * price;
+                        if (!newTrade.getStatus().equals("open")) userPortfolio.setTotal_gain_loss(userPortfolio.getTotal_gain_loss() + (newTrade.getFilled_quantity() / temp.getQuantity() * temp.getGain_loss())); 
+                        if (temp.getQuantity() > 0) temp.setGain_loss(temp_value - temp.getValue());
+                        temp.setQuantity(temp.getQuantity() - newTrade.getFilled_quantity());
+                        temp.setAvg_price((temp.getCurrent_price() * temp.getCounter() + price) / (temp.getCounter() + 1));
+                        temp.setCounter(temp.getCounter() + 1);
+                        temp.setCurrent_price(price);
+                        temp.setValue(temp.getQuantity() * price);
+                        newTrade.setAvg_price(temp.getAvg_price());
+                    } 
+                }
+                portfolioIter = buyerPortfolio.get().iterator();
+                double tempGainLoss = 0;
+                while (portfolioIter.hasNext()) {
+                    Asset temp = portfolioIter.next();
+                    if (temp.getQuantity() > 0) tempGainLoss = tempGainLoss + temp.getGain_loss();
+                    else temp.setGain_loss(0);
+                }
+                userPortfolio.setUnrealized_gain_loss(tempGainLoss);
+                if (!newTrade.getStatus().equals("open")) {
+                    Transaction newTransactions = new Transaction(-1, buyerId, cost);
+                    updateBalanceReceiver(buyerId, newTransactions);
+                }
             }
         }
         updatePortfolio(userPortfolio, buyerPortfolio);
@@ -399,7 +401,7 @@ public class TradeController {
     }
 
     public Trade _updateTrade(Trade temp) {
-        processTrade(temp);
+        processTrade(temp, true);
         return trade.save(temp);
     }
 
