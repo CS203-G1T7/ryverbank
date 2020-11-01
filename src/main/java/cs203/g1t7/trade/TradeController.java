@@ -121,7 +121,7 @@ public class TradeController {
         ZonedDateTime nowAsiaSingapore = ZonedDateTime.ofInstant(nowUtc, timeZone);
 
         int hour = nowAsiaSingapore.getHour();
-        if (hour < 9 || hour >= 22) {
+        if (hour < 9 || hour >= 17) {
             ZonedDateTime tradeSubmit = ZonedDateTime.ofInstant(Instant.ofEpochMilli(newTrade.getDate()), timeZone);
             if (tradeSubmit.getDayOfYear() <= nowAsiaSingapore.getDayOfYear() && tradeSubmit.getYear() <= nowAsiaSingapore.getYear()) {
                 if (tradeSubmit.getHour() < 17) newTrade.setStatus("expired");
@@ -179,7 +179,7 @@ public class TradeController {
                 Iterator<Trade> listIter = listCheck.iterator();
                 while (newTrade.getFilled_quantity() <= newTrade.getQuantity() && listIter.hasNext()) {
                     Trade tempAsk = listIter.next();
-                    if (tempAsk.getStatus().equals("partial-filled") || tempAsk.getStatus().equals("open")) {
+                    if (tempAsk.getAction().equals("sell") && (tempAsk.getStatus().equals("partial-filled") || tempAsk.getStatus().equals("open")) && tempAsk.getAsk() != 0) {
                         if (tempAsk.getAsk() <= newTrade.getBid()) {
                             int temp = Math.min(tempAsk.getQuantity() - tempAsk.getFilled_quantity(), newTrade.getQuantity());
                             double temp_tempCost = temp * tempAsk.getAsk();
@@ -312,7 +312,7 @@ public class TradeController {
                 Iterator<Trade> listIter = listCheck.iterator();
                 while (newTrade.getFilled_quantity() <= newTrade.getQuantity() && listIter.hasNext()) {
                     Trade tempBid = listIter.next();
-                    if ((tempBid.getStatus().equals("partial-filled") || tempBid.getStatus().equals("open")) && tempBid.getBid() != 0) {
+                    if (tempBid.getAction().equals("buy") && (tempBid.getStatus().equals("partial-filled") || tempBid.getStatus().equals("open")) && tempBid.getBid() != 0) {
                         if (tempBid.getBid() >= newTrade.getBid()) {
                             int temp = Math.min(tempBid.getQuantity() - tempBid.getFilled_quantity(), newTrade.getQuantity());
                             double temp_tempCost = temp * tempBid.getBid();
@@ -335,7 +335,7 @@ public class TradeController {
                                 if (tempPurchase.getCode().equals(newTrade.getSymbol())) {
                                     double temp_value = tempPurchase.getQuantity() * tempBid.getBid();
                                     if (tempPurchase.getQuantity() > 0) tempPurchase.setGain_loss(tempPurchase.getValue() - temp_value);
-                                    tempPurchase.setQuantity(tempPurchase.getQuantity() - newTrade.getFilled_quantity());
+                                    tempPurchase.setQuantity(tempPurchase.getQuantity() + newTrade.getFilled_quantity());
                                     tempPurchase.setAvg_price((tempPurchase.getCurrent_price() * tempPurchase.getCounter() + tempBid.getBid()) / (tempPurchase.getCounter() + 1));
                                     tempPurchase.setCounter(tempPurchase.getCounter() + 1);
                                     tempPurchase.setCurrent_price(tempBid.getBid());
