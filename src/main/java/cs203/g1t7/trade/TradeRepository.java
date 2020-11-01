@@ -17,4 +17,5 @@ public interface TradeRepository extends JpaRepository<Trade, Integer>{
     @Query("select trade from Trade trade where trade.account_id = ?2 and trade.id = ?1")
     Optional<Trade> findByIdAndAccountId(Integer id, Integer buyer);
     List<Trade> findByStatusOrStatus(String status1, String status2);
+    List<Trade> findBySymbol(String symbol);
 }

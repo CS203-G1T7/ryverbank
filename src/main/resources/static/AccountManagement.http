@@ -4,22 +4,6 @@ Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
 {
-    "full_name":"Raymond Tan",
-    "nric":"S5118309F",
-    "phone":"91251234",
-    "address":"27 Jalan Hidup S680234",
-    "username":"manager_1",
-    "password":"01_manager_01",
-    "authorities":"ROLE_MANAGER",
-    "active": true
-}
-
-### ROLE_MANAGER adding a new ROLE_USER (to use)
-POST http://localhost:5353/api/customers
-Content-Type: application/json
-Authorization: Basic manager_1 01_manager_01
-
-{
     "full_name":"Xiao Hua",
     "nric":"S5002946H",
     "phone":"91251236",
