@@ -11,6 +11,7 @@ import javax.persistence.Id;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.validation.constraints.Pattern;
+import javax.persistence.Column;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -50,6 +51,7 @@ public class User implements UserDetails{
 
     @NotNull(message = "NRIC should not be null")
     @Size(min = 9, max = 9, message = "NRIC should contain 9 characters")
+    @Column(unique=true)
     private String nric;
 
     @NotNull(message = "Phone number should not be null")

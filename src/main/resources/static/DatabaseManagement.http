@@ -1,9 +1,9 @@
 ### ROLE_MANAGER adding a new ROLE_USER (to use)
-GET http://www.ryverbank.ninja:8080/api/customers
+GET https://www.ryverbank.ninja:8080/api/customers
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
 ### ROLE_MANAGER adding a new ROLE_USER (to use)
-POST http://www.ryverbank.ninja:8080/api/reset
+POST https://www.ryverbank.ninja:8080/api/reset
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
