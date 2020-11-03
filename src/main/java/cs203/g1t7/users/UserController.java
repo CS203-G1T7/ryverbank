@@ -39,10 +39,14 @@ public class UserController {
     public User getUser(@PathVariable Integer id) {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User target = users.findById(id).get();
+        
+        // if(user.getAuthority().equals("ROLE_ANALYST") && !target.getAuthority().equals("ROLE_ANALYST")) throw new UserForbiddenException();
+        
         if(target == null) {
             throw new UserNotFoundException(id);
         }
-        if(user.getAuthority().equals("ROLE_USER")) {
+        if(!users.findByUsername(user.getUsername()).isPresent()) throw new UserNotAuthenticatedException(user.getUsername());
+        if(user.getAuthority().equals("ROLE_USER") || user.getAuthority().equals("ROLE_ANALYST")) {
             if(user.getActive() == false) {
                 throw new UserDeactivatedException();
             }
@@ -59,6 +63,8 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/api/customers")
     public User addUser(@Valid @RequestBody User user) {
+        if(users.findByUsername(user.getUsername()).isPresent()) throw new UsernameExistsException(user.getUsername());
+
         NricValidation validate = new NricValidation();
         String nric = user.getNric();
         if (!validate.validateNric(nric)) {
@@ -72,7 +78,8 @@ public class UserController {
     public User updateUser(@PathVariable (value = "id") Integer id, @Valid @RequestBody User newUserInfo) {
         if(id == null) throw new UserNotFoundException(id);
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if(user.getAuthority().equals("ROLE_USER")) {
+        User compare = users.findById(id).get();
+        if(user.getAuthority().equals("ROLE_USER") && (user.equals(compare))) {
             return users.findById(id).map(customer -> {customer.setPhone(newUserInfo.getPhone());
                                                         customer.setPassword(encoder.encode(newUserInfo.getPassword())); 
                                                         customer.setAddress(newUserInfo.getAddress());

@@ -2,6 +2,7 @@ package cs203.g1t7.users;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.Optional;
 
 /*  
     Source:
@@ -10,8 +11,12 @@ import java.util.regex.Matcher;
 */
 
 public class NricValidation {
+    private UserRepository users;
+
     public NricValidation() {}
+
     public boolean validateNric(String inputString) {
+
         String nricToTest = inputString.toUpperCase();
 
         // first letter must start with S, T, F or G. Last letter must be A - Z

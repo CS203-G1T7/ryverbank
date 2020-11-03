@@ -1,4 +1,136 @@
 ### ROLE_MANAGER adding a new ROLE_USER (user to use in next requests)
+POST https://www.ryverbank.ninja:8080/api/customers
+Content-Type: application/json
+Authorization: Basic manager_1 01_manager_01
+
+{
+    "full_name":"Bo Hua",
+    "nric":"S5002946H",
+    "phone":"91251235",
+    "address":"27 Jalan Alamak S6802342",
+    "username":"goodusers2",
+    "password":"Ilovewonton2",
+    "authorities":"ROLE_USER",
+    "active": true
+}
+
+### ROLE_MANAGER adding a new content (1)
+POST https://www.ryverbank.ninja:8080/api/contents
+Content-Type: application/json
+Authorization: Basic manager_1 01_manager_01
+
+{
+    "title":"Spring Security Fundamentals",
+    "summary":"summary",
+    "content": "content",
+    "link":"link1234567890",
+    "approved": true
+}
+
+### ROLE_MANAGER adding a new content (2)
+POST https://www.ryverbank.ninja:8080/api/contents
+Content-Type: application/json
+Authorization: Basic manager_1 01_manager_01
+
+{
+    "title":"Gone With The Wind",
+    "summary":"summary",
+    "content": "content",
+    "link":"link12345",
+    "approved": false
+}
+
+### ROLE_MANAGER get all contents (both approved and unapproved)
+GET https://www.ryverbank.ninja:8080/api/contents
+Authorization: Basic manager_1 01_manager_01
+
+### ROLE_MANAGER getting content with specified id
+GET https://www.ryverbank.ninja:8080/api/contents/6
+Authorization: Basic manager_1 01_manager_01
+
+### ROLE_MANAGER getting content with un-existent specified id
+GET https://www.ryverbank.ninja:8080/api/contents/3
+Authorization: Basic manager_1 01_manager_01
+
+### ROLE_USER only getting approved contents
+GET https://www.ryverbank.ninja:8080/api/contents
+Authorization: Basic goodusers2 Ilovewonton2
+
+### ROLE_MANAGER deletes content with specified id
+DELETE https://www.ryverbank.ninja:8080/api/contents/6
+Authorization: Basic manager_1 01_manager_01
+
+### ROLE_MANAGER get all contents
+GET https://www.ryverbank.ninja:8080/api/contents
+Authorization: Basic manager_1 01_manager_01
+
+### ROLE_MANAGER get all contents
+GET https://www.ryverbank.ninja:8080/api/contents/3
+Authorization: Basic goodusers2 Ilovewonton2
+
+### ROLE_MANAGER adding a new content (3)
+POST https://www.ryverbank.ninja:8080/api/contents
+Content-Type: application/json
+Authorization: Basic manager_1 01_manager_01
+
+{
+    "title":"The title of the advisory or news by manager haha",
+    "summary":"The short summary of the content item",
+    "content": "The text of the content item",
+    "link":"https://link.to.externalcontent",
+    "approved": false
+}
+
+### ROLE_USER unable to get an unapproved content with specified id
+GET https://www.ryverbank.ninja:8080/api/contents/7
+Authorization: Basic goodusers2 Ilovewonton2
+
+### ROLE_MANAGER updates an existing content
+PUT https://www.ryverbank.ninja:8080/api/contents/8
+Content-Type: application/json
+Authorization: Basic manager_1 01_manager_01
+
+{
+    "title":"The title of the advisory or news by manager",
+    "summary":"The short summary of the content item",
+    "content": "This is a new content by manager",
+    "link":"https://link.to.externalcontent",
+    "approved": false
+}
+
+### ROLE_ANALYST adding a new content (unapproved)
+POST https://www.ryverbank.ninja:8080/api/contents
+Content-Type: application/json
+Authorization: Basic analyst_1 01_analyst_01
+
+{
+    "title":"The new title",
+    "summary":"The short summary of the content item",
+    "content": "The text of the content item",
+    "link":"https://link.to.externalcontent",
+    "approved": false
+}
+
+### ROLE_ANALYST unable to approve an existing content
+PUT https://www.ryverbank.ninja:8080/api/contents/9
+Content-Type: application/json
+Authorization: Basic analyst_1 01_analyst_01
+
+{
+    "title":"The new title",
+    "summary":"The short summary of the content item",
+    "content": "The text of the content item",
+    "link":"https://link.to.externalcontent",
+    "approved": true
+}
+
+
+
+
+
+
+
+### ROLE_MANAGER adding a new ROLE_USER (user to use in next requests)
 POST http://localhost:5353/api/customers
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
@@ -123,3 +255,4 @@ Authorization: Basic analyst_1 01_analyst_01
     "link":"https://link.to.externalcontent",
     "approved": true
 }
+
