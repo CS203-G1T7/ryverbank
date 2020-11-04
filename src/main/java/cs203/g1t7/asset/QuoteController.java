@@ -46,10 +46,10 @@ public class QuoteController {
         OkHttpClient client = new OkHttpClient();
         try {
             Request request = new Request.Builder()
-                .url("https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes?symbols=A17U.SI&region=US")
+                .url(String.format("https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes?symbols=%s.SI&region=US", asset_id))
                 .get()
                 .addHeader("x-rapidapi-host", "apidojo-yahoo-finance-v1.p.rapidapi.com")
-                .addHeader("x-rapidapi-key", "75bb23538fmsh1a3ba597c8a23f7p1dbc62jsn3af1f51b6efe")
+                .addHeader("x-rapidapi-key", "e1e10a7566msh7e27b7b32a32892p1b388cjsn656aa333f5cf")
                 .build();
         
             Response response = client.newCall(request).execute();
