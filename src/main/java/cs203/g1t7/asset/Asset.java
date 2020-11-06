@@ -60,7 +60,7 @@ public class Asset {
         this.current_price = current_price;
         this.avg_price = current_price;
         this.value = current_price * quantity;
-        this.counter = 1;
+        this.counter = 0;
         this.gain_loss = 0;
         this.portfolio = portfolio;
     }

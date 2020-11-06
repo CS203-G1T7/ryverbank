@@ -71,7 +71,6 @@ public class QuoteController {
                 Quote quote;
                 if (quotes.findBySymbol(asset_id) != null) {
                     quote = quotes.findBySymbol(asset_id);
-                    quote.setLast_price(price);
                     quote.setBid(bid);
                     quote.setAsk(ask);
                 } else {

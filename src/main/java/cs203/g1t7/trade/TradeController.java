@@ -115,26 +115,43 @@ public class TradeController {
          }
     }
 
+    @PutMapping("/api/trades/{id}")
+    public void updateTrade(@PathVariable Integer id, @Valid @RequestBody Trade newTrade){
+        User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        try{
+            Trade temp = trade.findById(id).get();
+            if(user.getId() != temp.getCustomer_id()) {
+                throw new TradeForbiddenException(id);
+            }
+            if (newTrade.getStatus().equals("cancelled")) temp.setStatus("cancelled");
+            else throw new InvalidTradeException("Invalid update for trade: " + id);
+            trade.save(temp);
+         }catch(NoSuchElementException e) {
+            throw new TradeNotFoundException(id);
+         }
+    }
+    
     public void processTrade(Trade newTrade, boolean update) {
         Instant nowUtc = Instant.now();
         ZoneId timeZone = ZoneId.of("Asia/Singapore");
         ZonedDateTime nowAsiaSingapore = ZonedDateTime.ofInstant(nowUtc, timeZone);
 
         int hour = nowAsiaSingapore.getHour();
-        if (hour < 9 || hour >= 17) {
-            ZonedDateTime tradeSubmit = ZonedDateTime.ofInstant(Instant.ofEpochMilli(newTrade.getDate()), timeZone);
-            if (tradeSubmit.getDayOfYear() <= nowAsiaSingapore.getDayOfYear() && tradeSubmit.getYear() <= nowAsiaSingapore.getYear()) {
-                if (tradeSubmit.getHour() < 17) {
-                    if (tradeSubmit.getHour() <= 9 && tradeSubmit.getDayOfYear() == nowAsiaSingapore.getDayOfYear()) return;
-                    newTrade.setStatus("expired");
-                }
-            }
-            return;
-        }
+        // if (hour < 9 || hour >= 17) {
+        //     ZonedDateTime tradeSubmit = ZonedDateTime.ofInstant(Instant.ofEpochMilli(newTrade.getDate()), timeZone);
+        //     if (tradeSubmit.getDayOfYear() <= nowAsiaSingapore.getDayOfYear() && tradeSubmit.getYear() <= nowAsiaSingapore.getYear()) {
+        //         if (tradeSubmit.getHour() < 17) {
+        //             if (tradeSubmit.getHour() <= 9 && tradeSubmit.getDayOfYear() == nowAsiaSingapore.getDayOfYear()) return;
+        //             newTrade.setStatus("expired");
+        //         }
+        //     }
+        //     return;
+        // }
 
         double price;
         double cost;
         boolean marketTrade = false;
+        boolean changedAvg = false;
         int quantity = newTrade.getQuantity() - newTrade.getFilled_quantity();
         int account_id = newTrade.getCustomer_id();
         Quote tempQuote;
@@ -142,6 +159,7 @@ public class TradeController {
         else tempQuote = quote.findBySymbol(newTrade.getSymbol());
         Integer buyerId = newTrade.getAccount_id();
         Account buyer = accountService.getAccount(buyerId);
+        int prev_filled = newTrade.getFilled_quantity();
         
         Portfolio userPortfolio = portfolio.findByCustomerId(account_id);  
         if (userPortfolio == null) userPortfolio = assetCtrl.makePortfolio(account_id);      
@@ -158,12 +176,15 @@ public class TradeController {
                 marketTrade = true;
             }
             cost = price * quantity;
+            if (cost > buyer.getBalance()) throw new InsufficientFundsException();
             double tempCost = 0;
-            if (marketTrade) {
+            if (marketTrade || (!marketTrade && newTrade.getBid() >= tempQuote.getAsk())) {
+                price = tempQuote.getAsk();
+                cost = price * quantity;
                 if (tempQuote.getAsk_volume() >= quantity && cost < buyer.getBalance()) {
                     newTrade.setStatus("filled");
                     newTrade.setFilled_quantity(newTrade.getFilled_quantity() + quantity); 
-                    updateQuote(tempQuote, "ask", tempQuote.getAsk_volume() - newTrade.getQuantity());
+                    updateQuote(tempQuote, "ask", tempQuote.getAsk_volume() - newTrade.getQuantity(), price);
                     tempCost = cost;
                 } else {
                     newTrade.setStatus("partial-filled");
@@ -174,7 +195,7 @@ public class TradeController {
                         newTrade.setFilled_quantity(newTrade.getFilled_quantity() + ((int)((int)(buyer.getBalance() / tempQuote.getAsk()/100)) * 100));
                         tempCost = price * ((int)((int)(buyer.getBalance() / tempQuote.getAsk()/100)) * 100);
                     }
-                    updateQuote(tempQuote, "ask", tempQuote.getAsk_volume() - newTrade.getFilled_quantity()); 
+                    updateQuote(tempQuote, "ask", tempQuote.getAsk_volume() - newTrade.getFilled_quantity(), price); 
                 }
             } else {
                 List<Trade> listCheck = trade.findBySymbol(newTrade.getSymbol());
@@ -194,7 +215,7 @@ public class TradeController {
                             newTrade.setFilled_quantity(temp);
                             if (tempAsk.getFilled_quantity() > 0) tempAsk.setStatus("partial-filled");
                             if (tempAsk.getFilled_quantity() == tempAsk.getQuantity()) tempAsk.setStatus("filled");
-                            updateQuote(tempQuote, "ask", tempQuote.getAsk_volume() - temp);
+                            updateQuote(tempQuote, "ask", tempQuote.getAsk_volume() - temp, price);
                             Transaction newTransactions = new Transaction(-1, tempAsk.getAccount_id(), cost);
                             updateBalanceReceiver(tempAsk.getAccount_id(), newTransactions);
                             tempCost = tempCost + temp_tempCost;
@@ -208,11 +229,15 @@ public class TradeController {
                                     if (!tempAsk.getStatus().equals("open")) sellerPortfolio.setTotal_gain_loss(sellerPortfolio.getTotal_gain_loss() + (newTrade.getFilled_quantity() / tempAsk.getQuantity() * tempSeller.getGain_loss()));
                                     if (tempSeller.getQuantity() > 0) tempSeller.setGain_loss(tempSeller.getValue() - temp_value);
                                     tempSeller.setQuantity(tempSeller.getQuantity() - newTrade.getFilled_quantity());
-                                    tempSeller.setAvg_price((tempSeller.getCurrent_price() * tempSeller.getCounter() + tempAsk.getAsk()) / (tempSeller.getCounter() + 1));
+                                    if (newTrade.getFilled_quantity() > prev_filled) tempSeller.setAvg_price((tempSeller.getAvg_price() * tempSeller.getCounter() + tempAsk.getAsk()) / (tempSeller.getCounter() + 1));
                                     tempSeller.setCounter(tempSeller.getCounter() + 1);
                                     tempSeller.setCurrent_price(tempAsk.getAsk());
                                     tempSeller.setValue(tempSeller.getQuantity() * tempAsk.getAsk());
-                                    newTrade.setAvg_price(tempSeller.getAvg_price());         
+                                    if (newTrade.getFilled_quantity() > prev_filled) {
+                                        newTrade.setAvg_price((newTrade.getAvg_price() * newTrade.getCounter() + price) / (newTrade.getCounter() + 1));
+                                        newTrade.setCounter(newTrade.getCounter() + 1);
+                                        changedAvg = true;
+                                    }       
                                 } 
                             }
                             sellerIter = sellerPortfolio.getAssets().get().iterator();
@@ -228,7 +253,7 @@ public class TradeController {
                     }
                 }
                 if (newTrade.getFilled_quantity() == newTrade.getQuantity()) newTrade.setStatus("filled");
-                updateQuote(tempQuote, "bid", tempQuote.getBid_volume() + (newTrade.getQuantity() - newTrade.getFilled_quantity()));
+                updateQuote(tempQuote, "bid", tempQuote.getBid_volume() + (newTrade.getQuantity() - newTrade.getFilled_quantity()), price);
             }
             if (!update) {
                 boolean assetFound = false;
@@ -239,11 +264,10 @@ public class TradeController {
                             double temp_value = temp.getQuantity() * price;
                             if (temp.getQuantity() > 0) temp.setGain_loss(temp.getValue() - temp_value);
                             temp.setQuantity(temp.getQuantity() + newTrade.getFilled_quantity());
-                            temp.setAvg_price((temp.getCurrent_price() * temp.getCounter() + price) / (temp.getCounter() + 1));
+                            if (newTrade.getFilled_quantity() > prev_filled) temp.setAvg_price((temp.getAvg_price() * temp.getCounter() + price) / (temp.getCounter() + 1));
                             temp.setCounter(temp.getCounter() + 1);
                             temp.setCurrent_price(price);
-                            temp.setValue(temp.getQuantity() * price);
-                            newTrade.setAvg_price(temp.getAvg_price());
+                            temp.setValue(temp.getQuantity() * price);   
                             assetFound = true;
                         } 
                     }
@@ -263,13 +287,16 @@ public class TradeController {
                         Asset tempAsset = new Asset(account_id, newTrade.getSymbol(), newTrade.getFilled_quantity(), price, userPortfolio);
                         tempList.add(tempAsset);
                         buyerPortfolio = Optional.of(tempList);
-                    }
-                    newTrade.setAvg_price(price);
+                    }   
                 }
-                if (!newTrade.getStatus().equals("open")) {
-                    Transaction newTransactions = new Transaction(buyerId, -1, tempCost);
-                    updateBalanceSender(buyerId, newTransactions);
-                }
+                if (newTrade.getFilled_quantity() > prev_filled && !changedAvg) {
+                    newTrade.setAvg_price((newTrade.getAvg_price() * newTrade.getCounter() + price) / (newTrade.getCounter() + 1));
+                    newTrade.setCounter(newTrade.getCounter() + 1);
+                }    
+            }
+            if (!newTrade.getStatus().equals("open") || tempCost > 0) {
+                Transaction newTransactions = new Transaction(buyerId, -1, tempCost);
+                updateBalanceSender(buyerId, newTransactions);
             }
         } else {
             price = newTrade.getAsk();
@@ -278,6 +305,7 @@ public class TradeController {
                 marketTrade = true;
             }
             cost = price * quantity;
+            if (cost > buyer.getBalance()) throw new InsufficientFundsException();
             double tempCost = 0;
             boolean portFound = false;
             if (!buyerPortfolio.isPresent()) throw new InvalidTradeException("Assets not found on portfolio");
@@ -291,11 +319,13 @@ public class TradeController {
                 }
             }
             if (!portFound) throw new InvalidTradeException("Assets not found on portfolio");
-            if (marketTrade) {
+            if (marketTrade || (!marketTrade && newTrade.getAsk() <= tempQuote.getBid())) {
+                price = tempQuote.getBid();
+                cost = price * quantity;
                 if (tempQuote.getBid_volume() >= quantity && cost < buyer.getBalance()) {
                     newTrade.setStatus("filled");
                     newTrade.setFilled_quantity(newTrade.getFilled_quantity() + quantity); 
-                    updateQuote(tempQuote, "bid", tempQuote.getBid_volume() - newTrade.getQuantity());
+                    updateQuote(tempQuote, "bid", tempQuote.getBid_volume() - newTrade.getQuantity(), price);
                     tempCost = cost;
                 } else {
                     newTrade.setStatus("partial-filled");
@@ -306,7 +336,7 @@ public class TradeController {
                         newTrade.setFilled_quantity(newTrade.getFilled_quantity() + ((int)((int)(buyer.getBalance() / tempQuote.getBid()/100)) * 100));
                         tempCost = price * ((int)((int)(buyer.getBalance() / tempQuote.getBid()/100)) * 100);
                     }
-                    updateQuote(tempQuote, "bid", tempQuote.getBid_volume() - newTrade.getFilled_quantity()); 
+                    updateQuote(tempQuote, "bid", tempQuote.getBid_volume() - newTrade.getFilled_quantity(), price); 
                 }
             } else {
                 List<Trade> listCheck = trade.findBySymbol(newTrade.getSymbol());
@@ -327,7 +357,7 @@ public class TradeController {
                             tempBid.setFilled_quantity(tempBid.getFilled_quantity() + temp);
                             newTrade.setFilled_quantity(temp);
                             if (tempBid.getFilled_quantity() == tempBid.getQuantity()) tempBid.setStatus("filled");
-                            updateQuote(tempQuote, "bid", tempQuote.getBid_volume() - temp);
+                            updateQuote(tempQuote, "bid", tempQuote.getBid_volume() - temp, price);
                             Transaction newTransactions = new Transaction(tempBid.getAccount_id(), -1, tempCost);
                             updateBalanceSender(tempBid.getAccount_id(), newTransactions);
                             tempCost = tempCost + temp_tempCost;
@@ -340,11 +370,15 @@ public class TradeController {
                                     double temp_value = tempPurchase.getQuantity() * tempBid.getBid();
                                     if (tempPurchase.getQuantity() > 0) tempPurchase.setGain_loss(tempPurchase.getValue() - temp_value);
                                     tempPurchase.setQuantity(tempPurchase.getQuantity() + newTrade.getFilled_quantity());
-                                    tempPurchase.setAvg_price((tempPurchase.getCurrent_price() * tempPurchase.getCounter() + tempBid.getBid()) / (tempPurchase.getCounter() + 1));
+                                    if (newTrade.getFilled_quantity() > prev_filled) tempPurchase.setAvg_price((tempPurchase.getAvg_price() * tempPurchase.getCounter() + tempBid.getBid()) / (tempPurchase.getCounter() + 1));
                                     tempPurchase.setCounter(tempPurchase.getCounter() + 1);
                                     tempPurchase.setCurrent_price(tempBid.getBid());
                                     tempPurchase.setValue(tempPurchase.getQuantity() * tempBid.getBid());
-                                    newTrade.setAvg_price(tempPurchase.getAvg_price());
+                                    if (newTrade.getFilled_quantity() > prev_filled) {
+                                        newTrade.setAvg_price((newTrade.getAvg_price() * newTrade.getCounter() + price) / (newTrade.getCounter() + 1));
+                                        newTrade.setCounter(newTrade.getCounter() + 1);
+                                        changedAvg = true;
+                                    }    
                                 } 
                             }
                             purchaserIter = purchaserPortfolio.getAssets().get().iterator();
@@ -359,7 +393,7 @@ public class TradeController {
                     }
                 }
                 if (newTrade.getFilled_quantity() == newTrade.getQuantity()) newTrade.setStatus("filled");
-                updateQuote(tempQuote, "ask", tempQuote.getAsk_volume() + (newTrade.getQuantity() - newTrade.getFilled_quantity()));
+                updateQuote(tempQuote, "ask", tempQuote.getAsk_volume() + (newTrade.getQuantity() - newTrade.getFilled_quantity()), price);
             }
             if (!update) {
                 portfolioIter = buyerPortfolio.get().iterator();
@@ -370,11 +404,14 @@ public class TradeController {
                         if (!newTrade.getStatus().equals("open")) userPortfolio.setTotal_gain_loss(userPortfolio.getTotal_gain_loss() + (newTrade.getFilled_quantity() / temp.getQuantity() * temp.getGain_loss())); 
                         if (temp.getQuantity() > 0) temp.setGain_loss(temp_value - temp.getValue());
                         temp.setQuantity(temp.getQuantity() - newTrade.getFilled_quantity());
-                        temp.setAvg_price((temp.getCurrent_price() * temp.getCounter() + price) / (temp.getCounter() + 1));
+                        if (newTrade.getFilled_quantity() > prev_filled) temp.setAvg_price((temp.getAvg_price() * temp.getCounter() + price) / (temp.getCounter() + 1));
                         temp.setCounter(temp.getCounter() + 1);
                         temp.setCurrent_price(price);
                         temp.setValue(temp.getQuantity() * price);
-                        newTrade.setAvg_price(temp.getAvg_price());
+                        if (newTrade.getFilled_quantity() > prev_filled && !changedAvg) { 
+                            newTrade.setAvg_price(price);
+                            newTrade.setCounter(newTrade.getCounter() + 1);
+                        }
                     } 
                 }
                 portfolioIter = buyerPortfolio.get().iterator();
@@ -385,10 +422,10 @@ public class TradeController {
                     else temp.setGain_loss(0);
                 }
                 userPortfolio.setUnrealized_gain_loss(tempGainLoss);
-                if (!newTrade.getStatus().equals("open")) {
-                    Transaction newTransactions = new Transaction(-1, buyerId, cost);
-                    updateBalanceReceiver(buyerId, newTransactions);
-                }
+            }
+            if (!newTrade.getStatus().equals("open") || tempCost > 0) {
+                Transaction newTransactions = new Transaction(-1, buyerId, cost);
+                updateBalanceReceiver(buyerId, newTransactions);
             }
         }
         updatePortfolio(userPortfolio, buyerPortfolio);
@@ -413,9 +450,15 @@ public class TradeController {
         return portfolio.save(user);
     }
 
-    public Quote updateQuote(Quote temp, String condition, Integer volume) {
+    public Quote updateQuote(Quote temp, String condition, Integer volume, Double price) {
+        temp.setLast_price(price);
         if (condition.equals("ask")) temp.setAsk_volume(volume);
         else temp.setBid_volume(volume);
+        return quote.save(temp);
+    }
+
+    public Quote updateQuotePrice(Quote temp, Double price) {
+        temp.setLast_price(price);
         return quote.save(temp);
     }
 

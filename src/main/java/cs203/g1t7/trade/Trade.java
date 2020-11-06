@@ -5,7 +5,7 @@ import javax.persistence.*;
 import javax.validation.constraints.*;
 
 import cs203.g1t7.account.Account;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 
@@ -54,6 +54,9 @@ public class Trade {
     @NotNull (message = "Must specify customer id.")
     private Integer customer_id;
 
+    @JsonIgnore
+    private Integer counter;
+
     public Trade(Integer account_id, String symbol, Integer quantity, String action, double bid, double ask,
                     double avg_price, Integer filled_quantity, long date, String status, Integer customer_id){
         this.account_id = account_id;
@@ -62,7 +65,8 @@ public class Trade {
         this.action = action;
         this.bid = bid;
         this.ask = ask;
-        this.avg_price = avg_price;
+        this.avg_price = 1;
+        this.counter = 0;
         this.filled_quantity = filled_quantity;
         this.date = date;
         this.status = status;
