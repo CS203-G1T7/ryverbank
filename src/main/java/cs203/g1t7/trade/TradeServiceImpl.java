@@ -1,5 +1,7 @@
 package cs203.g1t7.trade;
 
+import org.springframework.stereotype.Service;
+
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -15,113 +17,35 @@ import java.time.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
-
 import cs203.g1t7.transaction.*;
 import cs203.g1t7.account.*;
 import cs203.g1t7.users.*;
 import cs203.g1t7.asset.*;
 
-import org.springframework.dao.EmptyResultDataAccessException;
+@Service
+public class TradeServiceImpl implements TradeService {
 
-@RestController
-public class TradeController {
-    
     private TradeRepository trade;
+    private TransactionRepository transactions;
+    private AccountRepository accounts;
+    private PortfolioRepository portfolio;
     private AccountService accountService;
-    private TradeService tradeService;
+    private QuoteRepository quote;
+    private QuoteController quoteCtrl;
+    private AssetController assetCtrl;
+    private AssetRepository assets;
 
-    public TradeController(TradeRepository trade, AccountService accountService, TradeService tradeService){
+    public TradeServiceImpl(AssetController assetCtrl, AccountService accountService, QuoteRepository quote, QuoteController quoteCtrl, PortfolioRepository portfolio, TransactionRepository transactions, AccountRepository accounts, TradeRepository trade){
+        this.transactions = transactions;
+        this.accounts = accounts;
+        this.portfolio = portfolio;
         this.trade = trade;
         this.accountService = accountService;
-        this.tradeService = tradeService;
+        this.quote = quote;
+        this.quoteCtrl = quoteCtrl;
+        this.assetCtrl = assetCtrl;
     }
 
-    @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping("/api/trades")
-    public Trade addTrade(@Valid @RequestBody Trade newTrade) {
-        newTrade.setDate(Instant.now().toEpochMilli());
-        newTrade.setStatus("open");
-        newTrade.setFilled_quantity(0);
-        newTrade.setCounter(0);
-
-        Integer account_id = newTrade.getAccount_id();
-
-        Account buyer = accountService.getAccount(account_id);
-        
-        if (buyer == null) throw new AccountNotFoundException(account_id);
-
-        int quantity = newTrade.getQuantity();
-        
-        if (quantity % 100 != 0) throw new InvalidTradeException("Buy or sell have to be in multiples of 100");
-
-        String action = newTrade.getAction();
-
-        if (!action.equals("buy") && !action.equals("sell")) {
-            throw new InvalidTradeException("Invalid action parameter");
-        }
-        
-        tradeService.updateTrade();
-        tradeService.processTrade(newTrade, false);
-        trade.save(newTrade);
-        return newTrade;
-    }
-
-    @GetMapping("/api/trades/{t_id}")
-    public Trade getTrade(@PathVariable (value = "t_id") Integer t_id) {
-        User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        Integer userId = user.getId();
-
-        if(userId == null) throw new TradeForbiddenException();
-
-        Optional<Trade> temp = trade.findByIdAndCustomerId(t_id, userId);
-        Trade tempTrade;
-
-        try {
-            tempTrade = temp.get();
-        } catch (NoSuchElementException e) {
-            throw new TradeNotFoundException(t_id);
-        }
-
-        return tempTrade;
-    }
-
-    @DeleteMapping("/api/trades/{id}")
-    public void deleteTrade(@PathVariable Integer id){
-        User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        try{
-            Trade temp = trade.findById(id).get();
-            if(user.getId() != temp.getCustomer_id()) {
-                throw new TradeForbiddenException(id);
-            }
-            if (temp.getStatus().equals("open")) temp.setStatus("cancelled");
-            else throw new InvalidTradeException("Cannot cancel filled trade with id: " + id);
-            trade.save(temp);
-         }catch(NoSuchElementException e) {
-            throw new TradeNotFoundException(id);
-         }
-    }
-
-    @PutMapping("/api/trades/{id}")
-    public Trade updateTrade(@PathVariable Integer id, @Valid @RequestBody Trade newTrade){
-        User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        try{
-            Trade temp = trade.findById(id).get();
-            if(user.getId() != temp.getCustomer_id()) {
-                throw new TradeForbiddenException(id);
-            }
-            if (newTrade.getStatus().equals("cancelled")) temp.setStatus("cancelled");
-            else throw new InvalidTradeException("Invalid update for trade: " + id);
-            return trade.save(temp);
-         }catch(NoSuchElementException e) {
-            throw new TradeNotFoundException(id);
-         }
-    }
-    
     public void processTrade(Trade newTrade, boolean update) {
         Instant nowUtc = Instant.now();
         ZoneId timeZone = ZoneId.of("Asia/Singapore");
@@ -146,48 +70,8 @@ public class TradeController {
         int quantity = newTrade.getQuantity() - newTrade.getFilled_quantity();
         int account_id = newTrade.getCustomer_id();
         Quote tempQuote;
-
         if (quote.findBySymbol(newTrade.getSymbol()) == null) tempQuote = quoteCtrl.getQuote(newTrade.getSymbol());
         else tempQuote = quote.findBySymbol(newTrade.getSymbol());
-
-        List<Trade> allAssetTradeFilteredBySymbol = trade.findBySymbol(newTrade.getSymbol());
-        if (allAssetTradeFilteredBySymbol != null && allAssetTradeFilteredBySymbol.size() != 0) {
-            double bestAsk = Double.MAX_VALUE;
-            for (int i = allAssetTradeFilteredBySymbol.size() - 1; i >= 0; i--) {
-                String action = newTrade.getAction();
-                if (!action.equals("sell")) continue;
-
-                Trade latestTrade = allAssetTradeFilteredBySymbol.get(allAssetTradeFilteredBySymbol.size() - 1);
-
-                String status = latestTrade.getStatus();
-                if (!status.equals("partial-filled") || !status.equals("open")) continue;
-
-                double latestAsk = latestTrade.getAsk();
-
-                if (latestAsk < bestAsk) bestAsk = latestAsk;
-                // break;
-            }
-
-            double bestBid = 0.0;
-            for (int i = allAssetTradeFilteredBySymbol.size() - 1; i >= 0; i--) {
-                String action = newTrade.getAction();
-                if (!action.equals("buy")) continue;
-
-                Trade latestTrade = allAssetTradeFilteredBySymbol.get(allAssetTradeFilteredBySymbol.size() - 1);
-
-                String status = latestTrade.getStatus();
-                if (!status.equals("partial-filled") || !status.equals("open")) continue;
-
-                double latestBid = latestTrade.getBid();
-
-                if (latestBid > bestBid) bestBid = latestBid;
-                // break;
-            }
-            tempQuote.setAsk(bestAsk);
-            tempQuote.setBid(bestBid);
-        }
-        
-
         Integer buyerId = newTrade.getAccount_id();
         Account buyer = accountService.getAccount(buyerId);
         int prev_filled = newTrade.getFilled_quantity();
@@ -321,9 +205,7 @@ public class TradeController {
                     }   
                 }
                 if (newTrade.getFilled_quantity() > prev_filled && !changedAvg) {
-                    Double avg = newTrade.getAvg_price();
-                    Integer counter = newTrade.getCounter();
-                    newTrade.setAvg_price((avg * counter + price) / counter + 1);
+                    newTrade.setAvg_price((newTrade.getAvg_price() * newTrade.getCounter() + price) / (newTrade.getCounter() + 1));
                     newTrade.setCounter(newTrade.getCounter() + 1);
                 }    
             }
@@ -380,7 +262,7 @@ public class TradeController {
                 while (newTrade.getFilled_quantity() <= newTrade.getQuantity() && listIter.hasNext()) {
                     Trade tempBid = listIter.next();
                     if (tempBid.getAction().equals("buy") && (tempBid.getStatus().equals("partial-filled") || tempBid.getStatus().equals("open")) && tempBid.getBid() != 0) {
-                        if (tempBid.getBid() >= newTrade.getBid()) {
+                        if (tempBid.getBid() >= newTrade.getAsk()) {
                             int temp = Math.min(tempBid.getQuantity() - tempBid.getFilled_quantity(), newTrade.getQuantity());
                             double temp_tempCost = temp * tempBid.getBid();
                             while (tempCost >= accountService.getAccount(tempBid.getAccount_id()).getBalance()) {
@@ -490,8 +372,9 @@ public class TradeController {
         return quote.save(temp);
     }
 
-    public Quote updateQuotePrice(Quote temp, Double price) {
-        temp.setLast_price(price);
+    public Quote updateQuoteValue(Quote temp, String condition, Double price) {
+        if (condition.equals("ask")) temp.setAsk(price);
+        else temp.setBid(price);
         return quote.save(temp);
     }
 

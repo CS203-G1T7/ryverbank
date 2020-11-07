@@ -36,7 +36,11 @@ Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
 {
+<<<<<<< HEAD
     "customer_id": 1,
+=======
+    "customer_id": 4,
+>>>>>>> 50a4550e2dc5af14cef9945fb5622e55c2ea43d4
     "balance": 50000.0
 }
 
