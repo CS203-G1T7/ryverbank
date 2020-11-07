@@ -33,7 +33,7 @@ Authorization: Basic user_1 01_user_01
 # }
 
 ### ROLE_MANAGER adding a new ROLE_USER
-POST http://localhost:5353/api/trades
+POST http://localhost:8080/api/trades
 Content-Type: application/json
 Authorization: Basic user_1 01_user_01
 
@@ -41,14 +41,30 @@ Authorization: Basic user_1 01_user_01
   "account_id": 1,
   "customer_id": 4,
   "symbol": "A17U",
-  "quantity": 2147483647,
+  "quantity": 100,
+  "action": "sell",
+  "bid": 0,
+  "ask": 5
+}
+
+###
+PUT http://localhost:8080/api/trades/2
+Content-Type: application/json
+Authorization: Basic user_1 01_user_01
+
+{
+  "account_id": 1,
+  "customer_id": 4,
+  "symbol": "A17U",
+  "quantity": 100,
   "action": "buy",
-  "bid": 10,
-  "ask": 2.9
+  "bid": 1,
+  "ask": 0,
+  "status": "cancelled"
 }
 
 ### ROLE_MANAGER adding a new ROLE_USER
-GET http://localhost:5353/api/trades/2
+GET http://localhost:8080/api/trades/2
 Content-Type: application/json
 Authorization: Basic user_1 01_user_01
 
