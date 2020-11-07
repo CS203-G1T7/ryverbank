@@ -1,5 +1,5 @@
 ### ROLE_MANAGER adding a new ROLE_USER (to use)
-POST https://www.ryverbank.ninja:8080/api/customers
+POST http://localhost:8080/api/customers
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
@@ -15,7 +15,7 @@ Authorization: Basic manager_1 01_manager_01
 }
 
 ### ROLE_MANAGER adding a new ROLE_USER (to use)
-POST https://www.ryverbank.ninja:8080/api/customers
+POST http://localhost:8080/api/customers
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
@@ -31,22 +31,22 @@ Authorization: Basic manager_1 01_manager_01
 }
 
 ### ROLE_MANAGER adding a new account for an existing ROLE_USER
-POST https://www.ryverbank.ninja:8080/api/accounts
+POST http://localhost:8080/api/accounts
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
 {
-    "customer_id": 41,
+    "customer_id": 1,
     "balance": 50000.0
 }
 
 ### ROLE_MANAGER adding a new account for an existing ROLE_USER
-POST https://www.ryverbank.ninja:8080/api/accounts
+POST http://localhost:8080/api/accounts
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
 {
-    "customer_id": 42,
+    "customer_id": 2,
     "balance": 50000.0
 }
 

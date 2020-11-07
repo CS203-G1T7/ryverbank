@@ -155,8 +155,48 @@ public class TradeController {
         int quantity = newTrade.getQuantity() - newTrade.getFilled_quantity();
         int account_id = newTrade.getCustomer_id();
         Quote tempQuote;
+
         if (quote.findBySymbol(newTrade.getSymbol()) == null) tempQuote = quoteCtrl.getQuote(newTrade.getSymbol());
         else tempQuote = quote.findBySymbol(newTrade.getSymbol());
+
+        List<Trade> allAssetTradeFilteredBySymbol = trade.findBySymbol(newTrade.getSymbol());
+        if (allAssetTradeFilteredBySymbol != null && allAssetTradeFilteredBySymbol.size() != 0) {
+            double bestAsk = Double.MAX_VALUE;
+            for (int i = allAssetTradeFilteredBySymbol.size() - 1; i >= 0; i--) {
+                String action = newTrade.getAction();
+                if (!action.equals("sell")) continue;
+
+                Trade latestTrade = allAssetTradeFilteredBySymbol.get(allAssetTradeFilteredBySymbol.size() - 1);
+
+                String status = latestTrade.getStatus();
+                if (!status.equals("partial-filled") || !status.equals("open")) continue;
+
+                double latestAsk = latestTrade.getAsk();
+
+                if (latestAsk < bestAsk) bestAsk = latestAsk;
+                // break;
+            }
+
+            double bestBid = 0.0;
+            for (int i = allAssetTradeFilteredBySymbol.size() - 1; i >= 0; i--) {
+                String action = newTrade.getAction();
+                if (!action.equals("buy")) continue;
+
+                Trade latestTrade = allAssetTradeFilteredBySymbol.get(allAssetTradeFilteredBySymbol.size() - 1);
+
+                String status = latestTrade.getStatus();
+                if (!status.equals("partial-filled") || !status.equals("open")) continue;
+
+                double latestBid = latestTrade.getBid();
+
+                if (latestBid > bestBid) bestBid = latestBid;
+                // break;
+            }
+            tempQuote.setAsk(bestAsk);
+            tempQuote.setBid(bestBid);
+        }
+        
+
         Integer buyerId = newTrade.getAccount_id();
         Account buyer = accountService.getAccount(buyerId);
         int prev_filled = newTrade.getFilled_quantity();
@@ -290,7 +330,9 @@ public class TradeController {
                     }   
                 }
                 if (newTrade.getFilled_quantity() > prev_filled && !changedAvg) {
-                    newTrade.setAvg_price((newTrade.getAvg_price() * newTrade.getCounter() + price) / (newTrade.getCounter() + 1));
+                    Double avg = newTrade.getAvg_price();
+                    Integer counter = newTrade.getCounter();
+                    newTrade.setAvg_price((avg * counter + price) / counter + 1);
                     newTrade.setCounter(newTrade.getCounter() + 1);
                 }    
             }
