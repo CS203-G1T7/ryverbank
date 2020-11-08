@@ -25,6 +25,7 @@ import org.springframework.test.context.ContextConfiguration;
 import cs203.g1t7.users.User;
 import cs203.g1t7.users.UserRepository;
 
+import cs203.g1t7.asset.*;
 import cs203.g1t7.trade.*;
 import cs203.g1t7.transaction.*;
 import cs203.g1t7.account.*;
@@ -189,49 +190,42 @@ class TradeIntegrationTest {
 
   @Test
 	public void addTrade() throws Exception {
-    // Trade trd1 = new Trade(1, "A17U", 100, "buy", 0, 5);
-    // Trade trd2 = new Trade(1, "A17U", 100, "buy", 0, 5);
+		URI uri = new URI(baseUrl + port + "/api/trades/");
 
-    // trade.save(trd1);
-    // trade.save(trd2);
+    Trade trd1 = new Trade(1, "A17U", 100, "buy", 0, 5, 0, 0, 0, "", 0);
+    ResponseEntity<Trade> result = restTemplate.withBasicAuth("user_1", "01_user_01")
+      .postForEntity(uri, trade, Trade.class);
 
-    // ResponseEntity<Trade> result = restTemplate.withBasicAuth("user_1", "01_user_01")
-    //   .postForEntity(uri, trd1, Trade.class);
-
-    // assertEquals(200, result.getStatusCode().value());
-    assertEquals(200, 200);
+    assertEquals(200, result.getStatusCode().value());
   }
   
   @Test
 	public void retrievePortfolio() throws Exception {
-    // List<Trade> t1 = new ArrayList<Trade>();
-		// ResponseEntity<Transaction> result = restTemplate.withBasicAuth("admin", "goodpassword").getForEntity(uri, Trade.class);
-    // assertEquals(200, result.getStatusCode().value());
-    assertEquals(200, 200);
-  }
+		URI uri = new URI(baseUrl + port + "/api/portfolio/");
+    ResponseEntity<Portfolio> result = restTemplate.withBasicAuth("user_1", "01_user_01")
+      .postForEntity(uri, null, null);
+      assertEquals(200, result.getStatusCode().value());
+      assertEquals(Asset.class, result.getBody().getAssets());
+    }
   
   @Test
 	public void sellTrade() throws Exception {
-    // Trade trd1 = new Trade(1, "A17U", 100, "sell", 0, 5);
-    // Trade trd2 = new Trade(1, "A17U", 100, "sell", 0, 5);
+		URI uri = new URI(baseUrl + port + "/api/trades/");
 
-    // trade.save(trd1);
-    // trade.save(trd2);
+    Trade trd1 = new Trade(1, "A17U", 100, "buy", 0, 5, 0, 0, 0, "", 0);
+    ResponseEntity<Trade> result = restTemplate.withBasicAuth("user_1", "01_user_01")
+      .postForEntity(uri, trade, Trade.class);
 
-    // ResponseEntity<Trade> result = restTemplate.withBasicAuth("user_1", "01_user_01")
-    //   .postForEntity(uri, trd1, Trade.class);
-
-    // assertEquals(200, result.getStatusCode().value());
-    assertEquals(200, 200);
-
+    assertEquals(200, result.getStatusCode().value());
   }
 
   @Test
 	public void retrievePortfolioAfterSell() throws Exception {
-    // List<Trade> t1 = new ArrayList<Trade>();
-		// ResponseEntity<Transaction> result = restTemplate.withBasicAuth("admin", "goodpassword").getForEntity(uri, Trade.class);
-    // assertEquals(200, result.getStatusCode().value());
-    assertEquals(200, 200);
-  }
+    URI uri = new URI(baseUrl + port + "/api/portfolio/");
+    ResponseEntity<Portfolio> result = restTemplate.withBasicAuth("user_1", "01_user_01")
+      .postForEntity(uri, null, null);
+      assertEquals(200, result.getStatusCode().value());
+      assertEquals(Asset.class, result.getBody().getAssets());
+    }
   
 }
