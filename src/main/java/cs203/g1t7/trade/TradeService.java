@@ -20,8 +20,6 @@ public interface TradeService {
 
     public Quote updateQuote(Quote temp, String condition, Integer volume, Double price);
 
-    // public Quote updateQuotePrice(Quote temp, Double price);
-
     public Transaction updateBalanceSender(Integer id_from, Transaction t);
 
     public Transaction updateBalanceReceiver(Integer id_to, Transaction t);

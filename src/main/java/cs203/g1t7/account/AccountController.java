@@ -98,6 +98,7 @@ public class AccountController {
 
         newAccountInfo.setTransactions(new ArrayList<Transaction>());
         newAccountInfo.setAvailable_balance(newAccountInfo.getBalance());
+        newAccountInfo.setOriginal_balance(newAccountInfo.getBalance());
 
         return accountService.addAccount(newAccountInfo);
     }

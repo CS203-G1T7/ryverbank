@@ -16,6 +16,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import cs203.g1t7.asset.*;
+import cs203.g1t7.trade.*;
 
 import yahoofinance.Stock;
 import yahoofinance.YahooFinance;
@@ -29,9 +30,11 @@ import com.squareup.okhttp.Response;// import cs203.g1t7.users.*;
 @RestController
 public class QuoteController {
     private QuoteRepository quotes;
+    private TradeRepository trade;
 
-    public QuoteController(QuoteRepository quotes) {
+    public QuoteController(QuoteRepository quotes, TradeRepository trade) {
         this.quotes = quotes;
+        this.trade = trade;
     }
 
     /**
@@ -73,6 +76,36 @@ public class QuoteController {
                     quote = quotes.findBySymbol(asset_id);
                     quote.setBid(bid);
                     quote.setAsk(ask);
+                    List<Trade> allAssetTradeFilteredBySymbol = trade.findBySymbol(asset_id);
+                    if (allAssetTradeFilteredBySymbol != null && allAssetTradeFilteredBySymbol.size() != 0) {
+                        double bestAsk = Double.MAX_VALUE;
+                        for (int i = allAssetTradeFilteredBySymbol.size() - 1; i >= 0; i--) {            
+                            Trade latestTrade = allAssetTradeFilteredBySymbol.get(allAssetTradeFilteredBySymbol.size() - 1);
+                    
+                            String status = latestTrade.getStatus();
+                            if ((!status.equals("partial-filled") || !status.equals("open")) && (latestTrade.getAsk() == 0 || latestTrade.getAction().equals("buy"))) continue;
+                    
+                            double latestAsk = latestTrade.getAsk();
+                    
+                            if (latestAsk < bestAsk) bestAsk = latestAsk;
+                            // break;
+                        }
+                    
+                        double bestBid = 0.0;
+                        for (int i = allAssetTradeFilteredBySymbol.size() - 1; i >= 0; i--) {           
+                            Trade latestTrade = allAssetTradeFilteredBySymbol.get(allAssetTradeFilteredBySymbol.size() - 1);
+                    
+                            String status = latestTrade.getStatus();
+                            if ((!status.equals("partial-filled") || !status.equals("open")) && (latestTrade.getBid() == 0 || latestTrade.getAction().equals("sell"))) continue;
+                    
+                            double latestBid = latestTrade.getBid();
+                    
+                            if (latestBid > bestBid) bestBid = latestBid;
+                            // break;
+                        }
+                        if (bestAsk != Double.MAX_VALUE) quote.setAsk(bestAsk);
+                        if (bestBid != 0.0) quote.setBid(bestBid);
+                    }
                 } else {
                     quote = new Quote(asset_id, price, bidVolume, bid, askVolume, ask);
                 }

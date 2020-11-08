@@ -33,11 +33,13 @@ public class TradeController {
     private TradeRepository trade;
     private AccountService accountService;
     private TradeService tradeService;
+    private QuoteRepository quote;
 
-    public TradeController(TradeRepository trade, AccountService accountService, TradeService tradeService){
+    public TradeController(QuoteRepository quote, TradeRepository trade, AccountService accountService, TradeService tradeService){
         this.trade = trade;
         this.accountService = accountService;
         this.tradeService = tradeService;
+        this.quote = quote;
     }
 
     @ResponseStatus(HttpStatus.CREATED)
@@ -100,6 +102,8 @@ public class TradeController {
             }
             if (temp.getStatus().equals("open")) temp.setStatus("cancelled");
             else throw new InvalidTradeException("Cannot cancel filled trade with id: " + id);
+            if (temp.getAction().equals("sell")) quote.findBySymbol(temp.getSymbol()).setAsk_volume(quote.findBySymbol(temp.getSymbol()).getAsk_volume() - temp.getQuantity());
+            else quote.findBySymbol(temp.getSymbol()).setBid_volume(quote.findBySymbol(temp.getSymbol()).getBid_volume() - temp.getQuantity());
             trade.save(temp);
          }catch(NoSuchElementException e) {
             throw new TradeNotFoundException(id);
@@ -114,8 +118,10 @@ public class TradeController {
             if(user.getId() != temp.getCustomer_id()) {
                 throw new TradeForbiddenException(id);
             }
-            if (newTrade.getStatus().equals("cancelled")) temp.setStatus("cancelled");
+            if (newTrade.getStatus().equals("open")) temp.setStatus("cancelled");
             else throw new InvalidTradeException("Invalid update for trade: " + id);
+            if (temp.getAction().equals("sell")) quote.findBySymbol(temp.getSymbol()).setAsk_volume(quote.findBySymbol(temp.getSymbol()).getAsk_volume() - temp.getQuantity());
+            else quote.findBySymbol(temp.getSymbol()).setBid_volume(quote.findBySymbol(temp.getSymbol()).getBid_volume() - temp.getQuantity());
             return trade.save(temp);
          }catch(NoSuchElementException e) {
             throw new TradeNotFoundException(id);

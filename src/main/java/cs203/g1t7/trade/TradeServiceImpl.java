@@ -63,6 +63,16 @@ public class TradeServiceImpl implements TradeService {
         //     return;
         // }
 
+        // if (hour < 9 || hour >= 17) {
+        //     ZonedDateTime tradeSubmit = ZonedDateTime.ofInstant(Instant.ofEpochMilli(newTrade.getDate()), timeZone);
+        //     if (tradeSubmit.getDayOfYear() <= nowAsiaSingapore.getDayOfYear() && tradeSubmit.getYear() <= nowAsiaSingapore.getYear()) {
+        //         if (tradeSubmit.getHour() < 17) {
+        //             if (tradeSubmit.getHour() <= 9 && tradeSubmit.getDayOfYear() == nowAsiaSingapore.getDayOfYear()) return;
+        //             newTrade.setStatus("expired");
+        //         }
+        //     }
+        //     return;
+        // }
         double price;
         double cost;
         boolean marketTrade = false;
@@ -72,43 +82,6 @@ public class TradeServiceImpl implements TradeService {
         Quote tempQuote;
         if (quote.findBySymbol(newTrade.getSymbol()) == null) tempQuote = quoteCtrl.getQuote(newTrade.getSymbol());
         else tempQuote = quote.findBySymbol(newTrade.getSymbol());
-
-        List<Trade> allAssetTradeFilteredBySymbol = trade.findBySymbol(newTrade.getSymbol());
-        if (allAssetTradeFilteredBySymbol != null && allAssetTradeFilteredBySymbol.size() != 0) {
-            double bestAsk = Double.MAX_VALUE;
-            for (int i = allAssetTradeFilteredBySymbol.size() - 1; i >= 0; i--) {
-                String action = newTrade.getAction();
-                if (!action.equals("sell")) continue;
-        
-                Trade latestTrade = allAssetTradeFilteredBySymbol.get(allAssetTradeFilteredBySymbol.size() - 1);
-        
-                String status = latestTrade.getStatus();
-                if (!status.equals("partial-filled") || !status.equals("open")) continue;
-        
-                double latestAsk = latestTrade.getAsk();
-        
-                if (latestAsk < bestAsk) bestAsk = latestAsk;
-                // break;
-            }
-        
-            double bestBid = 0.0;
-            for (int i = allAssetTradeFilteredBySymbol.size() - 1; i >= 0; i--) {
-                String action = newTrade.getAction();
-                if (!action.equals("buy")) continue;
-        
-                Trade latestTrade = allAssetTradeFilteredBySymbol.get(allAssetTradeFilteredBySymbol.size() - 1);
-        
-                String status = latestTrade.getStatus();
-                if (!status.equals("partial-filled") || !status.equals("open")) continue;
-        
-                double latestBid = latestTrade.getBid();
-        
-                if (latestBid > bestBid) bestBid = latestBid;
-                // break;
-            }
-            tempQuote.setAsk(bestAsk);
-            tempQuote.setBid(bestBid);
-        }
 
         Integer buyerId = newTrade.getAccount_id();
         Account buyer = accountService.getAccount(buyerId);
@@ -381,6 +354,29 @@ public class TradeServiceImpl implements TradeService {
                 updateBalanceReceiver(buyerId, newTransactions);
             }
         }
+
+        if (buyerPortfolio.isPresent()) {
+            portfolioIter = buyerPortfolio.get().iterator();
+            double tempValueTotal = 0;
+            while (portfolioIter.hasNext()) {
+                Asset tempAssetTotal = portfolioIter.next();
+                tempValueTotal = tempValueTotal + tempAssetTotal.getValue();
+            }
+
+            List<Account> all = accountService.listAccounts();
+            double tempOriginalBalTotal = 0;
+            double tempCurrentBalTotal = 0;
+    
+            for(int i = 0; i < all.size(); i++) {
+                if(all.get(i).getCustomer_id() == account_id) {
+                    tempOriginalBalTotal = tempOriginalBalTotal + all.get(i).getOriginal_balance();
+                    tempCurrentBalTotal = tempCurrentBalTotal + all.get(i).getBalance();
+                }
+            }
+
+            userPortfolio.setTotal_gain_loss(tempCurrentBalTotal + tempValueTotal - tempOriginalBalTotal);
+        }
+
         updatePortfolio(userPortfolio, buyerPortfolio);
     }
 
@@ -407,12 +403,6 @@ public class TradeServiceImpl implements TradeService {
         temp.setLast_price(price);
         if (condition.equals("ask")) temp.setAsk_volume(volume);
         else temp.setBid_volume(volume);
-        return quote.save(temp);
-    }
-
-    public Quote updateQuoteValue(Quote temp, String condition, Double price) {
-        if (condition.equals("ask")) temp.setAsk(price);
-        else temp.setBid(price);
         return quote.save(temp);
     }
 
