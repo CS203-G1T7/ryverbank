@@ -90,7 +90,7 @@ public class QuoteController {
                     
                             if (latestAsk < bestAsk) {
                                 bestAsk = latestAsk;
-                                bestAskVolume = latestTrade.getAsk_volume();
+                                bestAskVolume = latestTrade.getQuantity() - latestTrade.getFilled_quantity();
                             }
                             // break;
                         }
@@ -107,7 +107,7 @@ public class QuoteController {
                     
                             if (latestBid > bestBid) {
                                 bestBid = latestBid;
-                                bestBidVolume = latestTrade.getBid_volume();
+                                bestBidVolume = latestTrade.getQuantity() - latestTrade.getFilled_quantity();
                             } 
                             // break;
                         }
