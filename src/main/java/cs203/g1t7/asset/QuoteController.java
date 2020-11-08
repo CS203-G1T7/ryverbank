@@ -16,6 +16,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import cs203.g1t7.asset.*;
+import cs203.g1t7.trade.*;
 
 import yahoofinance.Stock;
 import yahoofinance.YahooFinance;
@@ -29,9 +30,11 @@ import com.squareup.okhttp.Response;// import cs203.g1t7.users.*;
 @RestController
 public class QuoteController {
     private QuoteRepository quotes;
+    private TradeRepository trade;
 
-    public QuoteController(QuoteRepository quotes) {
+    public QuoteController(QuoteRepository quotes, TradeRepository trade) {
         this.quotes = quotes;
+        this.trade = trade;
     }
 
     /**
@@ -46,10 +49,10 @@ public class QuoteController {
         OkHttpClient client = new OkHttpClient();
         try {
             Request request = new Request.Builder()
-                .url("https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes?symbols=A17U.SI&region=US")
+                .url(String.format("https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes?symbols=%s.SI&region=US", asset_id))
                 .get()
                 .addHeader("x-rapidapi-host", "apidojo-yahoo-finance-v1.p.rapidapi.com")
-                .addHeader("x-rapidapi-key", "75bb23538fmsh1a3ba597c8a23f7p1dbc62jsn3af1f51b6efe")
+                .addHeader("x-rapidapi-key", "9a41233dd9msh98664491aaf1edep1390efjsncf7844a7c528")
                 .build();
         
             Response response = client.newCall(request).execute();
@@ -71,11 +74,52 @@ public class QuoteController {
                 Quote quote;
                 if (quotes.findBySymbol(asset_id) != null) {
                     quote = quotes.findBySymbol(asset_id);
-                    quote.setLast_price(price);
-                    quote.setBid(bid);
-                    quote.setAsk(ask);
+                    List<Trade> allAssetTradeFilteredBySymbol = trade.findBySymbol(asset_id);
+                    if (allAssetTradeFilteredBySymbol != null && allAssetTradeFilteredBySymbol.size() != 0) {
+                        double bestAsk = Double.MAX_VALUE;
+                        int bestAskVolume = 0;
+                        for (int i = allAssetTradeFilteredBySymbol.size() - 1; i >= 0; i--) {            
+                            Trade latestTrade = allAssetTradeFilteredBySymbol.get(allAssetTradeFilteredBySymbol.size() - 1);
+                    
+                            String status = latestTrade.getStatus();
+                            if ((!status.equals("partial-filled") || !status.equals("open")) && (latestTrade.getAsk() == 0 || latestTrade.getAction().equals("buy"))) continue;
+                    
+                            double latestAsk = latestTrade.getAsk();
+                    
+                            if (latestAsk < bestAsk) {
+                                bestAsk = latestAsk;
+                                bestAskVolume = latestTrade.getQuantity() - latestTrade.getFilled_quantity();
+                            }
+                            // break;
+                        }
+                    
+                        double bestBid = 0.0;
+                        int bestBidVolume = 0;
+                        for (int i = allAssetTradeFilteredBySymbol.size() - 1; i >= 0; i--) {           
+                            Trade latestTrade = allAssetTradeFilteredBySymbol.get(allAssetTradeFilteredBySymbol.size() - 1);
+                    
+                            String status = latestTrade.getStatus();
+                            if ((!status.equals("partial-filled") || !status.equals("open")) && (latestTrade.getBid() == 0 || latestTrade.getAction().equals("sell"))) continue;
+                    
+                            double latestBid = latestTrade.getBid();
+                    
+                            if (latestBid > bestBid) {
+                                bestBid = latestBid;
+                                bestBidVolume = latestTrade.getQuantity() - latestTrade.getFilled_quantity();
+                            } 
+                            // break;
+                        }
+                        if (bestAsk != Double.MAX_VALUE && quote.getOriginalAskVol() <= 0) {
+                            quote.setAsk(bestAsk);
+                            quote.setAsk_volume(bestAskVolume);
+                        }
+                        if (bestBid != 0.0 && quote.getOriginalBidVol() <= 0) {
+                            quote.setBid(bestBid);
+                            quote.setBid_volume(bestBidVolume);
+                        }
+                    }
                 } else {
-                    quote = new Quote(asset_id, price, bidVolume, bid, askVolume, ask);
+                    quote = new Quote(asset_id, price, bidVolume, bid, askVolume, ask, askVolume, bidVolume);
                 }
                 return quotes.save(quote);
             } catch (JSONException e) {

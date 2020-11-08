@@ -33,6 +33,9 @@ public class Account {
     @NotNull (message = "available balance should not be null.")
     private double available_balance;
 
+    @JsonIgnore
+    private double original_balance;
+
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Transaction> transactions;
@@ -41,11 +44,13 @@ public class Account {
         this.customer_id = customer_id;
         this.balance = balance;
         this.available_balance = balance;
+        this.original_balance = balance;
     }
 
     public Account(Integer customer_id, double balance, double available_balance){
         this.customer_id = customer_id;
         this.balance = balance;
         this.available_balance = available_balance;
+        this.original_balance = balance;
     }
 }

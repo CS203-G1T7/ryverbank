@@ -1,5 +1,5 @@
 ### ROLE_MANAGER adding a new ROLE_USER (to use)
-POST https://www.ryverbank.ninja:8080/api/customers
+POST http://localhost:8080/api/customers
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
@@ -15,7 +15,7 @@ Authorization: Basic manager_1 01_manager_01
 }
 
 ### ROLE_MANAGER adding a new ROLE_USER (to use)
-POST https://www.ryverbank.ninja:8080/api/customers
+POST http://localhost:8080/api/customers
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
@@ -31,23 +31,23 @@ Authorization: Basic manager_1 01_manager_01
 }
 
 ### ROLE_MANAGER adding a new account for an existing ROLE_USER
-POST https://www.ryverbank.ninja:8080/api/accounts
+POST http://localhost:8080/api/accounts
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
 {
-    "customer_id": 41,
-    "balance": 50000.0
+    "customer_id": 4,
+    "balance": 500000.0
 }
 
 ### ROLE_MANAGER adding a new account for an existing ROLE_USER
-POST https://www.ryverbank.ninja:8080/api/accounts
+POST http://localhost:8080/api/accounts
 Content-Type: application/json
 Authorization: Basic manager_1 01_manager_01
 
 {
-    "customer_id": 42,
-    "balance": 50000.0
+    "customer_id": 5,
+    "balance": 10000.0
 }
 
 ### ROLE_MANAGER views all  accounts
@@ -143,7 +143,7 @@ Authorization: Basic manager_1 01_manager_01
 }
 
 ### ROLE_MANAGER views all  accounts
-GET http://localhost:5353/api/accounts
+GET http://localhost:8080/api/accounts
 Authorization: Basic manager_1 01_manager_01
 
 ### ROLE_MANAGER cannot view unexisting account
@@ -159,7 +159,7 @@ GET http://localhost:5353/api/accounts
 Authorization: Basic user_2 02_user_02
 
 ### ROLE_USER adds a new transaction
-POST http://localhost:5353/api/accounts/1/transactions
+POST http://localhost:8080/api/accounts/1/transactions
 Content-Type: application/json
 Authorization: Basic user_1 01_user_01
 
@@ -170,9 +170,9 @@ Authorization: Basic user_1 01_user_01
 }
 
 ### ROLE_USER(SENDER) views all of his/her accounts' transactions
-GET http://localhost:5353/api/accounts/1/transactions
+GET http://localhost:8080/api/accounts/1/transactions
 Authorization: Basic user_1 01_user_01
 
 ### ROLE_USER(RECEIVER) views all of his/her accounts' transactions
-GET http://localhost:5353/api/accounts/2/transactions
+GET http://localhost:8080/api/accounts/2/transactions
 Authorization: Basic user_2 02_user_02
