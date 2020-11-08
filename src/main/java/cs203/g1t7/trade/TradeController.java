@@ -18,6 +18,7 @@ import java.text.SimpleDateFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import cs203.g1t7.transaction.*;
@@ -34,17 +35,23 @@ public class TradeController {
     private AccountService accountService;
     private TradeService tradeService;
     private QuoteRepository quote;
+    private UserRepository users;
 
-    public TradeController(QuoteRepository quote, TradeRepository trade, AccountService accountService, TradeService tradeService){
+    public TradeController(UserRepository users, QuoteRepository quote, TradeRepository trade, AccountService accountService, TradeService tradeService){
         this.trade = trade;
         this.accountService = accountService;
         this.tradeService = tradeService;
         this.quote = quote;
+        this.users = users;
     }
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/api/trades")
     public Trade addTrade(@Valid @RequestBody Trade newTrade) {
+        User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if(user.getId() != newTrade.getCustomer_id()) {
+            throw new TradeForbiddenException();
+        }
         newTrade.setDate(Instant.now().toEpochMilli());
         newTrade.setStatus("open");
         newTrade.setFilled_quantity(0);
@@ -112,13 +119,13 @@ public class TradeController {
 
     @PutMapping("/api/trades/{id}")
     public Trade updateTrade(@PathVariable Integer id, @Valid @RequestBody Trade newTrade){
-        User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        // User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try{
             Trade temp = trade.findById(id).get();
-            if(user.getId() != temp.getCustomer_id()) {
-                throw new TradeForbiddenException(id);
-            }
-            if (newTrade.getStatus().equals("open")) temp.setStatus("cancelled");
+            // if(user.getId() != temp.getCustomer_id()) {
+            //     throw new TradeForbiddenException(id);
+            // }
+            if (temp.getStatus().equals("open") && newTrade.getStatus().equals("cancelled")) temp.setStatus("cancelled");
             else throw new InvalidTradeException("Invalid update for trade: " + id);
             if (temp.getAction().equals("sell")) quote.findBySymbol(temp.getSymbol()).setAsk_volume(quote.findBySymbol(temp.getSymbol()).getAsk_volume() - temp.getQuantity());
             else quote.findBySymbol(temp.getSymbol()).setBid_volume(quote.findBySymbol(temp.getSymbol()).getBid_volume() - temp.getQuantity());

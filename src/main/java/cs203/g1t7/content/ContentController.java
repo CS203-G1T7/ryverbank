@@ -41,7 +41,9 @@ public class ContentController {
     @GetMapping("/api/contents")
     public List<Content> getContents(){
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        // list all contents in database
         List<Content> all = contentService.listContents();
+        // list all approved contents for users to view
         List<Content> approved = new ArrayList<Content>();
         if(user.getAuthority().equals("ROLE_USER")) {
             for(int i = 0; i < all.size(); i++) {
@@ -51,6 +53,7 @@ public class ContentController {
             }
             return approved;
         }
+        // let other roles to view the whole content list
         return all;
     }
 
@@ -64,11 +67,9 @@ public class ContentController {
     public Content getContent(@PathVariable Integer id) {
         Content content = contentService.getContent(id);
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
         if(content == null) throw new ContentNotFoundException(id);
-
+        // if ROLE_USER tries to view unapproved content, return 404
         if(!content.getApproved() && user.getAuthority().equals("ROLE_USER")) throw new ContentForbiddenException(id);
-
         return content;
     }
 
@@ -82,7 +83,7 @@ public class ContentController {
     @PostMapping("/api/contents")
     public Content addContent(@Valid @RequestBody Content newContentInfo) {
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
+        // any contents made by ROLE_ANALYST must be set to false for 'approved' field
         if(user.getAuthority().equals("ROLE_ANALYST")) {
             newContentInfo.setApproved(false);
         }
@@ -101,6 +102,7 @@ public class ContentController {
         Content content = contentService.updateContent(id, newContentInfo);
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if(content == null) throw new ContentNotFoundException(id);
+        // ROLE_USER are not allowed to update contents return 404
         if(user.getAuthority().equals("ROLE_USER")) throw new ContentForbiddenException(id);
         return content;
     }
@@ -113,6 +115,7 @@ public class ContentController {
     @DeleteMapping("/api/contents/{id}")
     public void deleteContent(@PathVariable Integer id){
         User user = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        // ROLE_USER cannot delete content
         try{
             if(user.getAuthority().equals("ROLE_USER")) {
                 throw new ContentForbiddenException(id);

@@ -52,7 +52,7 @@ public class QuoteController {
                 .url(String.format("https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes?symbols=%s.SI&region=US", asset_id))
                 .get()
                 .addHeader("x-rapidapi-host", "apidojo-yahoo-finance-v1.p.rapidapi.com")
-                .addHeader("x-rapidapi-key", "e1e10a7566msh7e27b7b32a32892p1b388cjsn656aa333f5cf")
+                .addHeader("x-rapidapi-key", "9a41233dd9msh98664491aaf1edep1390efjsncf7844a7c528")
                 .build();
         
             Response response = client.newCall(request).execute();
@@ -74,8 +74,6 @@ public class QuoteController {
                 Quote quote;
                 if (quotes.findBySymbol(asset_id) != null) {
                     quote = quotes.findBySymbol(asset_id);
-                    quote.setBid(bid);
-                    quote.setAsk(ask);
                     List<Trade> allAssetTradeFilteredBySymbol = trade.findBySymbol(asset_id);
                     if (allAssetTradeFilteredBySymbol != null && allAssetTradeFilteredBySymbol.size() != 0) {
                         double bestAsk = Double.MAX_VALUE;
@@ -111,17 +109,17 @@ public class QuoteController {
                             } 
                             // break;
                         }
-                        if (bestAsk != Double.MAX_VALUE) {
+                        if (bestAsk != Double.MAX_VALUE && quote.getOriginalAskVol() <= 0) {
                             quote.setAsk(bestAsk);
                             quote.setAsk_volume(bestAskVolume);
                         }
-                        if (bestBid != 0.0) {
+                        if (bestBid != 0.0 && quote.getOriginalBidVol() <= 0) {
                             quote.setBid(bestBid);
                             quote.setBid_volume(bestBidVolume);
                         }
                     }
                 } else {
-                    quote = new Quote(asset_id, price, bidVolume, bid, askVolume, ask);
+                    quote = new Quote(asset_id, price, bidVolume, bid, askVolume, ask, askVolume, bidVolume);
                 }
                 return quotes.save(quote);
             } catch (JSONException e) {

@@ -52,7 +52,7 @@ public class AccountController {
 
         List<Account> all = accountService.listAccounts();
         List<Account> seen = new ArrayList<Account>();
-
+        // ROLE_USER can only see his/her own account
         if(user.getAuthority().equals("ROLE_USER")) {
             for(int i = 0; i < all.size(); i++) {
                 if(all.get(i).getCustomer_id() == user.getId()) {
@@ -77,7 +77,7 @@ public class AccountController {
 
         Account account = accountService.getAccount(id);
         if(account == null) throw new AccountNotFoundException(id);
-
+        // do not return Account that does not belong to the requester
         if(user.getAuthority().equals("ROLE_USER") && (user.getId() != account.getCustomer_id())) throw new AccountForbiddenException(id);
 
         return account;
@@ -93,9 +93,10 @@ public class AccountController {
     @PostMapping("/api/accounts")
     public Account addAccount(@Valid @RequestBody Account newAccountInfo) {
         Integer user_id = newAccountInfo.getCustomer_id();
+        // customer does not exist do not add account
         if(!users.existsById(user_id)) throw new AccountAddingFailedInvalidCustomerIdException(user_id);
         User user = users.findById(user_id).get();
-
+        // set proper fields to be added into the new account
         newAccountInfo.setTransactions(new ArrayList<Transaction>());
         newAccountInfo.setAvailable_balance(newAccountInfo.getBalance());
         newAccountInfo.setOriginal_balance(newAccountInfo.getBalance());

@@ -1,5 +1,5 @@
 ### ROLE_MANAGER adding a new ROLE_USER
-GET http://localhost:8080/api/stocks/A17U
+GET http://localhost:8080/api/stocks/C6L
 Content-Type: application/json
 
 ### ROLE_MANAGER adding a new ROLE_USER
@@ -41,10 +41,55 @@ Authorization: Basic user_1 01_user_01
   "account_id": 1,
   "customer_id": 4,
   "symbol": "A17U",
+  "quantity": 20000,
+  "action": "buy",
+  "bid": 0,
+  "ask": 0
+}
+
+### ROLE_MANAGER adding a new ROLE_USER
+POST http://localhost:8080/api/trades
+Content-Type: application/json
+Authorization: Basic good_user_1 01_user_01
+
+{
+  "account_id": 1,
+  "customer_id": 4,
+  "symbol": "C6L",
   "quantity": 100,
   "action": "buy",
   "bid": 0,
+  "ask": 50
+}
+
+### ROLE_MANAGER adding a new ROLE_USER
+POST http://localhost:8080/api/trades
+Content-Type: application/json
+Authorization: Basic user_1 01_user_01
+
+{
+  "account_id": 1,
+  "customer_id": 4,
+  "symbol": "A17U",
+  "quantity": 1000,
+  "action": "sell",
+  "bid": 0,
   "ask": 5
+}
+
+### ROLE_MANAGER adding a new ROLE_USER
+POST http://localhost:8080/api/trades
+Content-Type: application/json
+Authorization: Basic user_2 02_user_02
+
+{
+  "account_id": 2,
+  "customer_id": 5,
+  "symbol": "A17U",
+  "quantity": 2000,
+  "action": "buy",
+  "bid": 0,
+  "ask": 0
 }
 
 ###
@@ -64,9 +109,9 @@ Authorization: Basic user_1 01_user_01
 }
 
 ### ROLE_MANAGER adding a new ROLE_USER
-GET http://localhost:8080/api/trades/2
+GET http://localhost:8080/api/trades/8
 Content-Type: application/json
-Authorization: Basic user_1 01_user_01
+Authorization: Basic good_user_1 01_user_01
 
 ### ROLE_MANAGER adding a new ROLE_USER
 DELETE http://localhost:5353/api/trades/1

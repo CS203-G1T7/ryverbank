@@ -34,10 +34,12 @@ public class TradeServiceImpl implements TradeService {
     private QuoteController quoteCtrl;
     private AssetController assetCtrl;
     private AssetRepository assets;
+    private UserRepository users;
 
-    public TradeServiceImpl(AssetController assetCtrl, AccountService accountService, QuoteRepository quote, QuoteController quoteCtrl, PortfolioRepository portfolio, TransactionRepository transactions, AccountRepository accounts, TradeRepository trade){
+    public TradeServiceImpl(UserRepository users, AssetController assetCtrl, AccountService accountService, QuoteRepository quote, QuoteController quoteCtrl, PortfolioRepository portfolio, TransactionRepository transactions, AccountRepository accounts, TradeRepository trade){
         this.transactions = transactions;
         this.accounts = accounts;
+        this.users = users;
         this.portfolio = portfolio;
         this.trade = trade;
         this.accountService = accountService;
@@ -52,27 +54,17 @@ public class TradeServiceImpl implements TradeService {
         ZonedDateTime nowAsiaSingapore = ZonedDateTime.ofInstant(nowUtc, timeZone);
 
         int hour = nowAsiaSingapore.getHour();
-        // if (hour < 9 || hour >= 17) {
-        //     ZonedDateTime tradeSubmit = ZonedDateTime.ofInstant(Instant.ofEpochMilli(newTrade.getDate()), timeZone);
-        //     if (tradeSubmit.getDayOfYear() <= nowAsiaSingapore.getDayOfYear() && tradeSubmit.getYear() <= nowAsiaSingapore.getYear()) {
-        //         if (tradeSubmit.getHour() < 17) {
-        //             if (tradeSubmit.getHour() <= 9 && tradeSubmit.getDayOfYear() == nowAsiaSingapore.getDayOfYear()) return;
-        //             newTrade.setStatus("expired");
-        //         }
-        //     }
-        //     return;
-        // }
+        if (hour < 9 || hour >= 17) {
+            ZonedDateTime tradeSubmit = ZonedDateTime.ofInstant(Instant.ofEpochMilli(newTrade.getDate()), timeZone);
+            if (tradeSubmit.getDayOfYear() <= nowAsiaSingapore.getDayOfYear() && tradeSubmit.getYear() <= nowAsiaSingapore.getYear()) {
+                if (tradeSubmit.getHour() < 17) {
+                    if (tradeSubmit.getHour() <= 9 && tradeSubmit.getDayOfYear() == nowAsiaSingapore.getDayOfYear()) return;
+                    newTrade.setStatus("expired");
+                }
+            }
+            return;
+        }
 
-        // if (hour < 9 || hour >= 17) {
-        //     ZonedDateTime tradeSubmit = ZonedDateTime.ofInstant(Instant.ofEpochMilli(newTrade.getDate()), timeZone);
-        //     if (tradeSubmit.getDayOfYear() <= nowAsiaSingapore.getDayOfYear() && tradeSubmit.getYear() <= nowAsiaSingapore.getYear()) {
-        //         if (tradeSubmit.getHour() < 17) {
-        //             if (tradeSubmit.getHour() <= 9 && tradeSubmit.getDayOfYear() == nowAsiaSingapore.getDayOfYear()) return;
-        //             newTrade.setStatus("expired");
-        //         }
-        //     }
-        //     return;
-        // }
         double price;
         double cost;
         boolean marketTrade = false;
@@ -80,8 +72,7 @@ public class TradeServiceImpl implements TradeService {
         int quantity = newTrade.getQuantity() - newTrade.getFilled_quantity();
         int account_id = newTrade.getCustomer_id();
         Quote tempQuote;
-        if (quote.findBySymbol(newTrade.getSymbol()) == null) tempQuote = quoteCtrl.getQuote(newTrade.getSymbol());
-        else tempQuote = quote.findBySymbol(newTrade.getSymbol());
+        tempQuote = quoteCtrl.getQuote(newTrade.getSymbol());
 
         Integer buyerId = newTrade.getAccount_id();
         Account buyer = accountService.getAccount(buyerId);
@@ -102,15 +93,17 @@ public class TradeServiceImpl implements TradeService {
                 marketTrade = true;
             }
             cost = price * quantity;
+
             if (cost > buyer.getBalance()) throw new InsufficientFundsException();
             double tempCost = 0;
-            if (marketTrade || (!marketTrade && newTrade.getBid() >= tempQuote.getAsk())) {
+            if ((marketTrade && tempQuote.getOriginalAskVol() > 0) || (!marketTrade && newTrade.getBid() >= tempQuote.getAsk())) {
                 price = tempQuote.getAsk();
                 cost = price * quantity;
                 if (tempQuote.getAsk_volume() >= quantity && cost < buyer.getBalance()) {
                     newTrade.setStatus("filled");
                     newTrade.setFilled_quantity(newTrade.getFilled_quantity() + quantity); 
                     updateQuote(tempQuote, "ask", tempQuote.getAsk_volume() - newTrade.getQuantity(), price);
+                    updateOriginalVolume(tempQuote, "ask", newTrade.getQuantity());
                     tempCost = cost;
                 } else {
                     newTrade.setStatus("partial-filled");
@@ -122,27 +115,37 @@ public class TradeServiceImpl implements TradeService {
                         tempCost = price * ((int)((int)(buyer.getBalance() / tempQuote.getAsk()/100)) * 100);
                     }
                     updateQuote(tempQuote, "ask", tempQuote.getAsk_volume() - newTrade.getFilled_quantity(), price); 
+                    updateOriginalVolume(tempQuote, "ask", newTrade.getFilled_quantity());
                 }
             } else {
                 List<Trade> listCheck = trade.findBySymbol(newTrade.getSymbol());
-                Collections.sort(listCheck, Comparator.comparing(Trade::getDate).thenComparing(Trade::getAsk));
+                Collections.sort(listCheck, Comparator.comparing(Trade::getAsk).thenComparing(Trade::getDate));
                 Iterator<Trade> listIter = listCheck.iterator();
                 while (newTrade.getFilled_quantity() <= newTrade.getQuantity() && listIter.hasNext()) {
                     Trade tempAsk = listIter.next();
+                    if (marketTrade) price = tempAsk.getAsk();
                     if (tempAsk.getAction().equals("sell") && (tempAsk.getStatus().equals("partial-filled") || tempAsk.getStatus().equals("open")) && tempAsk.getAsk() != 0) {
-                        if (tempAsk.getAsk() <= newTrade.getBid()) {
-                            int temp = Math.min(tempAsk.getQuantity() - tempAsk.getFilled_quantity(), newTrade.getQuantity());
+                        if (tempAsk.getAsk() <= price) {
+                            int temp = Math.min(tempAsk.getQuantity() - tempAsk.getFilled_quantity(), newTrade.getQuantity() - newTrade.getFilled_quantity());
                             double temp_tempCost = temp * tempAsk.getAsk();
-                            while (tempCost >= buyer.getBalance()) {
+                            while (temp_tempCost > buyer.getBalance() - tempCost) {
                                 temp = temp - 100;
                                 temp_tempCost = temp * tempAsk.getAsk();
+                                if (temp <= 0) break;
                             }
+                            if (temp <= 0) break;
                             tempAsk.setFilled_quantity(tempAsk.getFilled_quantity() + temp);
-                            newTrade.setFilled_quantity(temp);
-                            if (tempAsk.getFilled_quantity() > 0) tempAsk.setStatus("partial-filled");
-                            if (tempAsk.getFilled_quantity() == tempAsk.getQuantity()) tempAsk.setStatus("filled");
-                            updateQuote(tempQuote, "ask", tempQuote.getAsk_volume() - temp, price);
-                            Transaction newTransactions = new Transaction(-1, tempAsk.getAccount_id(), cost);
+                            newTrade.setFilled_quantity(newTrade.getFilled_quantity() + temp);
+                            if (tempAsk.getFilled_quantity() > 0) {
+                                if (tempAsk.getFilled_quantity() < tempAsk.getQuantity()) tempAsk.setStatus("partial-filled");
+                                else tempAsk.setStatus("filled");
+                            }
+                            if (newTrade.getFilled_quantity() > 0) {
+                                if (newTrade.getFilled_quantity() == newTrade.getQuantity()) newTrade.setStatus("filled");
+                                else newTrade.setStatus("partial-filled");
+                            }
+                            //updateQuote(tempQuote, "ask", tempQuote.getAsk_volume() - temp, price);
+                            Transaction newTransactions = new Transaction(-1, tempAsk.getAccount_id(), temp_tempCost);
                             updateBalanceReceiver(tempAsk.getAccount_id(), newTransactions);
                             tempCost = tempCost + temp_tempCost;
                             
@@ -178,10 +181,11 @@ public class TradeServiceImpl implements TradeService {
                         }
                     }
                 }
+                if (newTrade.getFilled_quantity() > 0) newTrade.setAvg_price(tempCost / newTrade.getFilled_quantity());
                 if (newTrade.getFilled_quantity() == newTrade.getQuantity()) newTrade.setStatus("filled");
                 updateQuote(tempQuote, "bid", tempQuote.getBid_volume() + (newTrade.getQuantity() - newTrade.getFilled_quantity()), price);
             }
-            if (!update) {
+            
                 boolean assetFound = false;
                 if (buyerPortfolio.isPresent()) {
                     while (portfolioIter.hasNext()) {
@@ -206,7 +210,7 @@ public class TradeServiceImpl implements TradeService {
                     }
                     userPortfolio.setUnrealized_gain_loss(tempGainLoss);
                 }
-                if (!assetFound) {
+                if (!update && !assetFound) {
                     if (buyerPortfolio.isPresent()) buyerPortfolio.get().add(new Asset(account_id, newTrade.getSymbol(), newTrade.getFilled_quantity(), price, userPortfolio));
                     else {
                         List<Asset> tempList = new ArrayList<>();
@@ -219,7 +223,7 @@ public class TradeServiceImpl implements TradeService {
                     newTrade.setAvg_price((newTrade.getAvg_price() * newTrade.getCounter() + price) / (newTrade.getCounter() + 1));
                     newTrade.setCounter(newTrade.getCounter() + 1);
                 }    
-            }
+            
             if (!newTrade.getStatus().equals("open") || tempCost > 0) {
                 Transaction newTransactions = new Transaction(buyerId, -1, tempCost);
                 updateBalanceSender(buyerId, newTransactions);
@@ -231,6 +235,7 @@ public class TradeServiceImpl implements TradeService {
                 marketTrade = true;
             }
             cost = price * quantity;
+
             if (cost > buyer.getBalance()) throw new InsufficientFundsException();
             double tempCost = 0;
             boolean portFound = false;
@@ -245,13 +250,14 @@ public class TradeServiceImpl implements TradeService {
                 }
             }
             if (!portFound) throw new InvalidTradeException("Assets not found on portfolio");
-            if (marketTrade || (!marketTrade && newTrade.getAsk() <= tempQuote.getBid())) {
+            if ((marketTrade && tempQuote.getOriginalBidVol() > 0) || (!marketTrade && newTrade.getAsk() <= tempQuote.getBid())) {
                 price = tempQuote.getBid();
                 cost = price * quantity;
                 if (tempQuote.getBid_volume() >= quantity && cost < buyer.getBalance()) {
                     newTrade.setStatus("filled");
                     newTrade.setFilled_quantity(newTrade.getFilled_quantity() + quantity); 
                     updateQuote(tempQuote, "bid", tempQuote.getBid_volume() - newTrade.getQuantity(), price);
+                    updateOriginalVolume(tempQuote, "bid", newTrade.getQuantity());
                     tempCost = cost;
                 } else {
                     newTrade.setStatus("partial-filled");
@@ -263,28 +269,34 @@ public class TradeServiceImpl implements TradeService {
                         tempCost = price * ((int)((int)(buyer.getBalance() / tempQuote.getBid()/100)) * 100);
                     }
                     updateQuote(tempQuote, "bid", tempQuote.getBid_volume() - newTrade.getFilled_quantity(), price); 
+                    updateOriginalVolume(tempQuote, "bid", newTrade.getFilled_quantity());
                 }
             } else {
                 List<Trade> listCheck = trade.findBySymbol(newTrade.getSymbol());
-                Collections.sort(listCheck, Comparator.comparing(Trade::getDate).thenComparing(Trade::getBid, (s1, s2) -> { 
-                                                                                                    return s2.compareTo(s1);
-                                                                                                }));
+                Collections.sort(listCheck, Comparator.comparing(Trade::getBid, (s1, s2) -> { 
+                    return s2.compareTo(s1);
+                }).thenComparing(Trade::getDate));
                 Iterator<Trade> listIter = listCheck.iterator();
                 while (newTrade.getFilled_quantity() <= newTrade.getQuantity() && listIter.hasNext()) {
                     Trade tempBid = listIter.next();
+                    if (marketTrade) price = tempBid.getBid();
                     if (tempBid.getAction().equals("buy") && (tempBid.getStatus().equals("partial-filled") || tempBid.getStatus().equals("open")) && tempBid.getBid() != 0) {
-                        if (tempBid.getBid() >= newTrade.getAsk()) {
-                            int temp = Math.min(tempBid.getQuantity() - tempBid.getFilled_quantity(), newTrade.getQuantity());
+                        if (tempBid.getBid() >= price) {
+                            int temp = Math.min(tempBid.getQuantity() - tempBid.getFilled_quantity(), newTrade.getQuantity() - newTrade.getFilled_quantity());
                             double temp_tempCost = temp * tempBid.getBid();
-                            while (tempCost >= accountService.getAccount(tempBid.getAccount_id()).getBalance()) {
+                            tempCost = tempCost + temp_tempCost;
+                            while (tempCost > accountService.getAccount(tempBid.getAccount_id()).getBalance()) {
                                 temp = temp - 100;
                                 temp_tempCost = temp * tempBid.getBid();
+                                tempCost = tempCost - (100 * tempBid.getBid());
+                                if (temp <= 0) break;
                             }
+                            if (temp <= 0) break;
                             tempBid.setFilled_quantity(tempBid.getFilled_quantity() + temp);
-                            newTrade.setFilled_quantity(temp);
+                            newTrade.setFilled_quantity(newTrade.getFilled_quantity() + temp);
                             if (tempBid.getFilled_quantity() == tempBid.getQuantity()) tempBid.setStatus("filled");
                             updateQuote(tempQuote, "bid", tempQuote.getBid_volume() - temp, price);
-                            Transaction newTransactions = new Transaction(tempBid.getAccount_id(), -1, tempCost);
+                            Transaction newTransactions = new Transaction(tempBid.getAccount_id(), -1, temp_tempCost);
                             updateBalanceSender(tempBid.getAccount_id(), newTransactions);
                             tempCost = tempCost + temp_tempCost;
 
@@ -318,10 +330,11 @@ public class TradeServiceImpl implements TradeService {
                         }
                     }
                 }
+                if (newTrade.getFilled_quantity() > 0) newTrade.setAvg_price(tempCost / newTrade.getFilled_quantity());
                 if (newTrade.getFilled_quantity() == newTrade.getQuantity()) newTrade.setStatus("filled");
                 updateQuote(tempQuote, "ask", tempQuote.getAsk_volume() + (newTrade.getQuantity() - newTrade.getFilled_quantity()), price);
             }
-            if (!update) {
+            
                 portfolioIter = buyerPortfolio.get().iterator();
                 while (portfolioIter.hasNext()) {
                     Asset temp = portfolioIter.next();
@@ -348,36 +361,47 @@ public class TradeServiceImpl implements TradeService {
                     else temp.setGain_loss(0);
                 }
                 userPortfolio.setUnrealized_gain_loss(tempGainLoss);
-            }
+            
             if (!newTrade.getStatus().equals("open") || tempCost > 0) {
                 Transaction newTransactions = new Transaction(-1, buyerId, cost);
                 updateBalanceReceiver(buyerId, newTransactions);
             }
         }
 
-        if (buyerPortfolio.isPresent()) {
-            portfolioIter = buyerPortfolio.get().iterator();
-            double tempValueTotal = 0;
-            while (portfolioIter.hasNext()) {
-                Asset tempAssetTotal = portfolioIter.next();
-                tempValueTotal = tempValueTotal + tempAssetTotal.getValue();
-            }
+        List<User> tempUserList = users.findAll();
+        Iterator<User> tempUserIter = tempUserList.iterator();
+        
+        while (tempUserIter.hasNext()) {
+            userPortfolio = portfolio.findByCustomerId(tempUserIter.next().getId());  
+            if (userPortfolio == null) userPortfolio = assetCtrl.makePortfolio(account_id);      
+            buyerPortfolio = userPortfolio.getAssets();
+            portfolioIter = null;
 
-            List<Account> all = accountService.listAccounts();
-            double tempOriginalBalTotal = 0;
-            double tempCurrentBalTotal = 0;
-    
-            for(int i = 0; i < all.size(); i++) {
-                if(all.get(i).getCustomer_id() == account_id) {
-                    tempOriginalBalTotal = tempOriginalBalTotal + all.get(i).getOriginal_balance();
-                    tempCurrentBalTotal = tempCurrentBalTotal + all.get(i).getBalance();
+            if (buyerPortfolio.isPresent()) {
+                portfolioIter = buyerPortfolio.get().iterator();
+                double tempValueTotal = 0;
+                while (portfolioIter.hasNext()) {
+                    Asset tempAssetTotal = portfolioIter.next();
+                    tempValueTotal = tempValueTotal + tempAssetTotal.getValue();
                 }
+
+                List<Account> all = accountService.listAccounts();
+                double tempOriginalBalTotal = 0;
+                double tempCurrentBalTotal = 0;
+        
+                for(int i = 0; i < all.size(); i++) {
+                    if(all.get(i).getCustomer_id() == account_id) {
+                        tempOriginalBalTotal = tempOriginalBalTotal + all.get(i).getOriginal_balance();
+                        tempCurrentBalTotal = tempCurrentBalTotal + all.get(i).getBalance();
+                    }
+                }
+
+                userPortfolio.setTotal_gain_loss(tempCurrentBalTotal + tempValueTotal - tempOriginalBalTotal);
+
+                updatePortfolio(userPortfolio, buyerPortfolio);
             }
-
-            userPortfolio.setTotal_gain_loss(tempCurrentBalTotal + tempValueTotal - tempOriginalBalTotal);
+        
         }
-
-        updatePortfolio(userPortfolio, buyerPortfolio);
     }
 
     public void updateTrade() {
@@ -403,6 +427,12 @@ public class TradeServiceImpl implements TradeService {
         temp.setLast_price(price);
         if (condition.equals("ask")) temp.setAsk_volume(volume);
         else temp.setBid_volume(volume);
+        return quote.save(temp);
+    }
+
+    public Quote updateOriginalVolume(Quote temp, String condition, Integer volume) {
+        if (condition.equals("ask")) temp.setOriginalAskVol(temp.getOriginalAskVol() - volume);
+        else temp.setOriginalBidVol(temp.getOriginalBidVol() - volume);
         return quote.save(temp);
     }
 

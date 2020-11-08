@@ -51,6 +51,12 @@ public class Quote {
     @NotNull (message = "Buyer account must not be null.")
     @Column (name = "ask")
     private Double ask;
+
+    //@JsonIgnore
+    private int originalAskVol;
+
+    //@JsonIgnore
+    private int originalBidVol;
     
     // public Quote() {
     //     try {
