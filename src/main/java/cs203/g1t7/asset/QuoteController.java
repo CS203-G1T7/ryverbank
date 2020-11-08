@@ -79,6 +79,7 @@ public class QuoteController {
                     List<Trade> allAssetTradeFilteredBySymbol = trade.findBySymbol(asset_id);
                     if (allAssetTradeFilteredBySymbol != null && allAssetTradeFilteredBySymbol.size() != 0) {
                         double bestAsk = Double.MAX_VALUE;
+                        int bestAskVolume = 0;
                         for (int i = allAssetTradeFilteredBySymbol.size() - 1; i >= 0; i--) {            
                             Trade latestTrade = allAssetTradeFilteredBySymbol.get(allAssetTradeFilteredBySymbol.size() - 1);
                     
@@ -87,11 +88,15 @@ public class QuoteController {
                     
                             double latestAsk = latestTrade.getAsk();
                     
-                            if (latestAsk < bestAsk) bestAsk = latestAsk;
+                            if (latestAsk < bestAsk) {
+                                bestAsk = latestAsk;
+                                bestAskVolume = latestTrade.getAsk_volume();
+                            }
                             // break;
                         }
                     
                         double bestBid = 0.0;
+                        int bestBidVolume = 0;
                         for (int i = allAssetTradeFilteredBySymbol.size() - 1; i >= 0; i--) {           
                             Trade latestTrade = allAssetTradeFilteredBySymbol.get(allAssetTradeFilteredBySymbol.size() - 1);
                     
@@ -100,11 +105,20 @@ public class QuoteController {
                     
                             double latestBid = latestTrade.getBid();
                     
-                            if (latestBid > bestBid) bestBid = latestBid;
+                            if (latestBid > bestBid) {
+                                bestBid = latestBid;
+                                bestBidVolume = latestTrade.getBid_volume();
+                            } 
                             // break;
                         }
-                        if (bestAsk != Double.MAX_VALUE) quote.setAsk(bestAsk);
-                        if (bestBid != 0.0) quote.setBid(bestBid);
+                        if (bestAsk != Double.MAX_VALUE) {
+                            quote.setAsk(bestAsk);
+                            quote.setAsk_volume(bestAskVolume);
+                        }
+                        if (bestBid != 0.0) {
+                            quote.setBid(bestBid);
+                            quote.setBid_volume(bestBidVolume);
+                        }
                     }
                 } else {
                     quote = new Quote(asset_id, price, bidVolume, bid, askVolume, ask);
